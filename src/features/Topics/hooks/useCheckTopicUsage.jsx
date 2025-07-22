@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader"
 
 // ✅ NUEVO HOOK: Para verificar si un tema está en uso antes de intentar eliminarlo
-export function useCheckTopicUsage() {
+function useCheckTopicUsage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -12,7 +13,7 @@ export function useCheckTopicUsage() {
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:3000/api/topic/${topicId}/usage`, {
+      const response = await fetchWithAutoRenew(`http://localhost:3000/api/topic/${topicId}/usage`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -36,3 +37,5 @@ export function useCheckTopicUsage() {
 
   return { checkTopicUsage, loading, error }
 }
+
+export { useCheckTopicUsage }

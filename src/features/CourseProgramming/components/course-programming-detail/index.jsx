@@ -7,6 +7,7 @@ import ProgrammingDetails from "./programming-details";
 import { useGetCourseProgrammingById } from "../../hooks/useGetCourseProgrammingById";
 import EvaluationDetailModal from "../../../Evaluations/components/EvaluationDetailModal";
 import SupportMaterialDetailModal from "../../../SupportMaterials/componentes/SupportMaterialDetailModal";
+import UserMenu from "../../../../shared/components/userMenu";
 
 export default function CourseProgrammingDetail() {
   const navigate = useNavigate();
@@ -14,32 +15,8 @@ export default function CourseProgrammingDetail() {
   const {programming, loading: isLoading } = useGetCourseProgrammingById(id);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(null);
-  const { logout } = useAuth();
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false);
-    setShowLogoutConfirm(true);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const handleShowEvaluationDetail = (evaluation) => {
     setSelectedDetail(evaluation);
@@ -121,48 +98,13 @@ export default function CourseProgrammingDetail() {
     <div className="min-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1f384c]">
-            Detalle de Programación
-          </h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <span>Administrador</span>
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-[#1f384c]">Programación de Cursos</h1>
+          <UserMenu />
         </div>
       </header>
 
       <div className="container mx-auto px-6">
         <ProgrammingDetails programming={adaptedProgramming} />
-
-        <ConfirmationModal
-          isOpen={showLogoutConfirm}
-          onClose={() => setShowLogoutConfirm(false)}
-          onConfirm={handleLogout}
-          title="Cerrar Sesión"
-          message="¿Está seguro de que desea cerrar la sesión actual?"
-          confirmText="Cerrar Sesión"
-          confirmColor="bg-[#f44144] hover:bg-red-600"
-        />
 
         <EvaluationDetailModal
           isOpen={showDetailModal}

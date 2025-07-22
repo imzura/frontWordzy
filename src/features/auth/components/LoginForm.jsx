@@ -7,17 +7,16 @@ const LoginForm = ({ onLoginSuccess, login }) => {
   const [formData, setFormData] = useState({
     document: "",
     password: "",
-    rememberMe: false,
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }))
   }
 
@@ -27,9 +26,18 @@ const LoginForm = ({ onLoginSuccess, login }) => {
     setError("")
 
     try {
-      await login(formData)
-      onLoginSuccess()
+      console.log("Enviando formulario con datos:", formData)
+      const userData = await login(formData)
+      console.log("Login exitoso, llamando a onLoginSuccess con:", userData)
+
+      // Verificar que el token existe antes de continuar
+      if (!userData.token) {
+        throw new Error("No se recibió token de autenticación")
+      }
+
+      onLoginSuccess(userData)
     } catch (err) {
+      console.error("Error en handleSubmit:", err)
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -37,12 +45,11 @@ const LoginForm = ({ onLoginSuccess, login }) => {
   }
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password functionality
     alert("Funcionalidad de recuperación de contraseña próximamente")
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="w-full max-w-lg mx-auto px-4 sm:px-6 lg:px-5">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Número de Documento */}
         <div className="w-full">
@@ -99,19 +106,8 @@ const LoginForm = ({ onLoginSuccess, login }) => {
           </div>
         </div>
 
-        {/* Remember Me */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              name="rememberMe"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label className="ml-2 block text-sm text-gray-700">Recuérdame</label>
-          </div>
-
+        {/* Forgot Password */}
+        <div className="flex justify-center items-center">
           <button
             type="button"
             onClick={handleForgotPassword}

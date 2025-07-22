@@ -1,36 +1,36 @@
-import { Navigate } from "react-router-dom"
-import ProtectedRoute from "./shared/components/ProtectedRoute"
-import Apprentices from "./features/Apprentices/pages/Apprentices"
-import Files from "./features/File/pages/Files"
-import InstructorsPage from "./features/Instructors/pages/InstructorsPage"
-import Programs from "./features/Programs/pages/Programs"
-import TopicsPage from "./features/Topics/pages/TopicsPage"
-import SupportMaterials from "./features/SupportMaterials/pages/SupportMaterials"
-import Evaluations from "./features/Evaluations/pages/Evaluations"
-import Feedback from "./features/Feedback/pages/Feedback"
-import FeedbackDetails from "./features/Feedback/pages/FeedbackDetails"
-import StudentDetails from "./features/Feedback/pages/StudentDetails"
-import ScheduledCoursesPage from "./features/ScheduledCourses/pages/ScheduledCoursesPage"
-import Badges from "./features/Badges/pages/Badges"
-import Badges2 from "./features/Badges/pages/Badges2"
-import Badges3 from "./features/Badges/pages/Badges3"
-import Ranking from "./features/Ranking/pages/Ranking"
-import Dashboard from "./features/Dashboard/pages/Dashboard"
-import LoginPage from "./features/auth/pages/LoginPage"
-import RegistrarRolPage from "./features/Role/pages/RegisterRolePage"
-import RolesPage from "./features/Role/pages/RolesPage"
-import EditarRolPage from "./features/Role/pages/EditarRolePage"
-import CourseProgrammingPage from "./features/CourseProgramming/pages/course-programming-page"
-import CourseProgramming from "./features/CourseProgramming/components/course-programming"
-import CourseProgrammingDetail from "./features/CourseProgramming/components/course-programming-detail"
-import LevelAssignmentPage from "./features/LevelAssignment/pages/LevelAssignmentPage"
-import CreateEvaluationPage from "./features/Evaluations/pages/CreateEvaluationPage"
-import EditEvaluationPage from "./features/Evaluations/pages/EditEvaluationPage"
-import CreateInstructorPage from "./features/Instructors/pages/CreateInstructorPage"
-import EditInstructorPage from "./features/Instructors/pages/EditInstructorPage"
-import LevelsPageUpdated from "./features/ScheduledCourses/pages/LevelsPage"
-import TraineesPageUpdated from "./features/ScheduledCourses/pages/TraineesPage"
-import ProgressViewWithRealData from "./features/ScheduledCourses/pages/ProgressView"
+import { Navigate } from "react-router-dom";
+import ProtectedRoute from "./shared/components/ProtectedRoute";
+import Apprentices from "./features/Apprentices/pages/Apprentices";
+import Files from "./features/File/pages/Files";
+import InstructorsPage from "./features/Instructors/pages/InstructorsPage";
+import Programs from "./features/Programs/pages/Programs";
+import TopicsPage from "./features/Topics/pages/TopicsPage";
+import SupportMaterials from "./features/SupportMaterials/pages/SupportMaterials";
+import Evaluations from "./features/Evaluations/pages/Evaluations";
+import Feedback from "./features/Feedback/pages/Feedback";
+import FeedbackDetails from "./features/Feedback/pages/FeedbackDetails";
+import StudentDetails from "./features/Feedback/pages/StudentDetails";
+import ScheduledCoursesPage from "./features/ScheduledCourses/pages/ScheduledCoursesPage";
+import Badges from "./features/Badges/pages/Badges";
+import Badges2 from "./features/Badges/pages/Badges2";
+import Badges3 from "./features/Badges/pages/Badges3";
+import Ranking from "./features/Ranking/pages/Ranking";
+import Dashboard from "./features/Dashboard/pages/Dashboard";
+import LoginPage from "./features/auth/pages/LoginPage";
+import RegistrarRolPage from "./features/Role/pages/RegisterRolePage";
+import RolesPage from "./features/Role/pages/RolesPage";
+import EditarRolPage from "./features/Role/pages/EditarRolePage";
+import CourseProgrammingPage from "./features/CourseProgramming/pages/course-programming-page";
+import CourseProgramming from "./features/CourseProgramming/components/course-programming";
+import CourseProgrammingDetail from "./features/CourseProgramming/components/course-programming-detail";
+import LevelAssignmentPage from "./features/LevelAssignment/pages/LevelAssignmentPage";
+import CreateEvaluationPage from "./features/Evaluations/pages/CreateEvaluationPage";
+import EditEvaluationPage from "./features/Evaluations/pages/EditEvaluationPage";
+import CreateInstructorPage from "./features/Instructors/pages/CreateInstructorPage";
+import EditInstructorPage from "./features/Instructors/pages/EditInstructorPage";
+import LevelsPageUpdated from "./features/ScheduledCourses/pages/LevelsPage";
+import TraineesPageUpdated from "./features/ScheduledCourses/pages/TraineesPage";
+import ProgressViewWithRealData from "./features/ScheduledCourses/pages/ProgressView";
 
 // Definición de rutas
 const routes = [
@@ -75,7 +75,7 @@ const routes = [
       </ProtectedRoute>
     ),
   },
-    {
+  {
     path: "/formacion/instructores/crear",
     element: <CreateInstructorPage />,
   },
@@ -116,7 +116,7 @@ const routes = [
       </ProtectedRoute>
     ),
   },
-      {
+  {
     path: "/programacion/evaluaciones/crear",
     element: <CreateEvaluationPage />,
   },
@@ -158,8 +158,8 @@ const routes = [
   },
   {
     path: "/programacion/asignacionNiveles",
-    element: <LevelAssignmentPage />
-  }, 
+    element: <LevelAssignmentPage />,
+  },
   {
     path: "/programacion/insigneas",
     element: (
@@ -213,7 +213,7 @@ const routes = [
     path: "/progreso/cursosProgramados/niveles/aprendices/progreso/:nombre",
     element: (
       <ProtectedRoute requiredRoute="/progreso/cursosProgramados">
-        <ProgressViewWithRealData/>
+        <ProgressViewWithRealData />
       </ProtectedRoute>
     ),
   },
@@ -274,6 +274,6 @@ const routes = [
       </ProtectedRoute>
     ),
   },
-]
+];
 
-export default routes
+export default routes;

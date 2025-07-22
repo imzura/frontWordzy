@@ -9,11 +9,15 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Verificar si hay un usuario guardado en localStorage
     const savedUser = localStorage.getItem("wordzy_user")
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser))
+        const userData = JSON.parse(savedUser)
+        if (userData.token) {
+          setUser(userData)
+        } else {
+          localStorage.removeItem("wordzy_user")
+        }
       } catch (error) {
         console.error("Error parsing saved user:", error)
         localStorage.removeItem("wordzy_user")
@@ -23,13 +27,28 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = (userData) => {
-    setUser(userData)
-    localStorage.setItem("wordzy_user", JSON.stringify(userData))
+    if (!userData || !userData.token) {
+      return
+    }
+
+    const userWithToken = {
+      ...userData,
+      token: userData.token,
+    }
+
+    setUser(userWithToken)
+    localStorage.setItem("wordzy_user", JSON.stringify(userWithToken))
   }
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem("wordzy_user")
+  }
+
+  const updateUser = (updatedData) => {
+    const updatedUser = { ...user, ...updatedData }
+    setUser(updatedUser)
+    localStorage.setItem("wordzy_user", JSON.stringify(updatedUser))
   }
 
   const value = {
@@ -38,6 +57,8 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     logout,
+    updateUser,
+    isAuthenticated: !!user?.token,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

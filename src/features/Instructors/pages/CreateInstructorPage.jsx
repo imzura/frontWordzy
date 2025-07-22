@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { ChevronDown, Loader2 } from "lucide-react"
-import { useAuth } from "../../auth/hooks/useAuth"
+import { Loader2 } from "lucide-react"
 import ConfirmationModal from "../../../shared/components/ConfirmationModal"
 import usePostInstructor from "../hooks/usePostInstructor"
 import useGetCourses from "../hooks/useGetCourses"
@@ -18,6 +17,7 @@ import {
   checkDocumentUniqueness,
   checkEmailUniqueness,
 } from "../services/instructorValidationService"
+import UserMenu from "../../../shared/components/userMenu"
 
 // Hook de debounce estable que no causa re-renders
 const useDebouncedCallback = (callback, delay) => {
@@ -41,7 +41,6 @@ const useDebouncedCallback = (callback, delay) => {
 
 const CreateInstructorPage = () => {
   const navigate = useNavigate()
-  const { logout } = useAuth()
   const { createInstructor, loading: creating } = usePostInstructor()
   const { courses, loading: coursesLoading, error: coursesError, hasLoaded, loadCoursesOnDemand } = useGetCourses()
 
@@ -62,10 +61,7 @@ const CreateInstructorPage = () => {
   })
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const dropdownRef = useRef(null)
 
   // --- Lógica de Validación ---
 
@@ -136,14 +132,6 @@ const CreateInstructorPage = () => {
     return true
   }, [formData, errors, asyncValidation])
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsDropdownOpen(false)
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -188,14 +176,6 @@ const CreateInstructorPage = () => {
   }
 
   const handleCancel = () => navigate("/formacion/instructores")
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false)
-    setShowLogoutConfirm(true)
-  }
-  const handleLogout = () => {
-    logout()
-    navigate("/login")
-  }
 
   const handleSearchChange = async (e) => {
     const value = e.target.value
@@ -221,38 +201,18 @@ const CreateInstructorPage = () => {
   const displayedCourses = getDisplayedCourses()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-[#1f384c]">Crear Nuevo Instructor</h1>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                <span>Administrador</span>
-                <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-              </button>
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <button
-                    onClick={handleLogoutClick}
-                    className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                  >
-                    Cerrar Sesión
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen">
+      <header className="bg-white py-4 px-6 border-b border-[#d6dade]">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#1f384c]">Instructores</h1>
+          <UserMenu />
         </div>
-      </div>
+      </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Información del Instructor</h2>
+            <h2 className="text-xl font-bold text-[#1f384c]">Crear Instructor</h2>
           </div>
           <form onSubmit={handleSubmit} className="p-6">
             {errors.general && (
@@ -385,7 +345,7 @@ const CreateInstructorPage = () => {
                 )}
               </h3>
               <div className="border border-gray-200 rounded-md">
-                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <div className="p-4 border-b border-gray-200">
                   <div className="relative">
                     <input
                       type="text"
@@ -461,15 +421,7 @@ const CreateInstructorPage = () => {
           </form>
         </div>
       </div>
-      <ConfirmationModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
-        title="Cerrar Sesión"
-        message="¿Está seguro de que desea cerrar la sesión actual?"
-        confirmText="Cerrar Sesión"
-        confirmColor="bg-[#f44144] hover:bg-red-600"
-      />
+
       <ConfirmationModal
         isOpen={showSuccessModal}
         onClose={() => navigate("/formacion/instructores")}

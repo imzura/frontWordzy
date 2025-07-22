@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader";
 
-export function useGetTopics() {
+function useGetTopics() {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,7 +10,9 @@ export function useGetTopics() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3000/api/topic");
+      const response = await fetchWithAutoRenew("http://localhost:3000/api/topic", {
+        method: "GET",}
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -30,3 +33,5 @@ export function useGetTopics() {
 
   return { topics, loading, error, refetch: fetchTopics };
 }
+
+export { useGetTopics }

@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader"
 
 // ✅ NUEVO HOOK: Para verificar si un tema puede cambiar de estado
-export function useCheckTopicStatusChange() {
+function useCheckTopicStatusChange() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -18,7 +19,7 @@ export function useCheckTopicStatusChange() {
       }
 
       // Si se está desactivando, verificar si está en uso
-      const response = await fetch(`http://localhost:3000/api/topic/${topicId}/usage`, {
+      const response = await fetchWithAutoRenew(`http://localhost:3000/api/topic/${topicId}/usage`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -51,3 +52,5 @@ export function useCheckTopicStatusChange() {
 
   return { checkStatusChange, loading, error }
 }
+
+export { useCheckTopicStatusChange }

@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader";
 
-export function usePutTopic() {
+function usePutTopic() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -9,7 +10,7 @@ export function usePutTopic() {
   setError(null);
   
   try {
-    const response = await fetch(`http://localhost:3000/api/topic/${id}`, {
+    const response = await fetchWithAutoRenew(`http://localhost:3000/api/topic/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -33,3 +34,5 @@ export function usePutTopic() {
 
   return { putTopic, loading, error };
 }
+
+export { usePutTopic }

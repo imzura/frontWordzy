@@ -1,5 +1,6 @@
 "use client"
 
+// Actualizar las importaciones
 import { useContext } from "react"
 import { Navigate } from "react-router-dom"
 import { AuthContext } from "../contexts/AuthContext"
@@ -17,14 +18,14 @@ const ProtectedRoute = ({ children, requiredRoute }) => {
     )
   }
 
-  // Si no hay usuario, redirigir al login
-  if (!user) {
+  // Si no hay usuario o no hay token, redirigir al login
+  if (!user || !user.token) {
     return <Navigate to="/login" replace />
   }
 
   // Si se especifica una ruta requerida, verificar acceso
   if (requiredRoute && !hasRouteAccess(user.role, requiredRoute)) {
-    // En lugar de mostrar error, redirigir a la ruta por defecto del rol
+    // Redirigir a la ruta por defecto del rol
     const defaultRoute = getDefaultRouteByRole(user.role)
     return <Navigate to={defaultRoute} replace />
   }

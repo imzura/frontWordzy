@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader";
 
-export function usePostTopic() {
+function usePostTopic() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -8,7 +9,7 @@ export function usePostTopic() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3000/api/topic", {
+      const response = await fetchWithAutoRenew("http://localhost:3000/api/topic", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -33,3 +34,4 @@ export function usePostTopic() {
 
   return { postTopic, loading, error };
 }
+ export { usePostTopic }

@@ -122,7 +122,7 @@ export default function ProgrammingDetails({ programming }) {
   return (
     <div className="max-w-10xl mx-auto p-6 bg-white rounded-lg shadow">
       <header className="mb-6">
-        <h1 className="text-xl font-bold text-[#1f384c] mb-4">Información Básica</h1>
+        <h1 className="text-xl font-bold text-[#1f384c] mb-4">Detalle de la Programación</h1>
       </header>
 
       <div className="space-y-6">

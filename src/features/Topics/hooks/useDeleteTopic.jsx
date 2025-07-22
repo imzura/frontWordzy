@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader";
 
-export function useDeleteTopic() {
+function useDeleteTopic() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -11,7 +12,7 @@ export function useDeleteTopic() {
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:3000/api/topic/${id}`, {
+      const response = await fetchWithAutoRenew(`http://localhost:3000/api/topic/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -40,3 +41,5 @@ export function useDeleteTopic() {
 
   return { deleteTopic, loading, error }
 }
+
+export { useDeleteTopic }
