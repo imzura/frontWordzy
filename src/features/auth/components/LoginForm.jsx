@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { User, Eye, EyeOff, Lock } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 const LoginForm = ({ onLoginSuccess, login }) => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const LoginForm = ({ onLoginSuccess, login }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -45,7 +47,7 @@ const LoginForm = ({ onLoginSuccess, login }) => {
   }
 
   const handleForgotPassword = () => {
-    alert("Funcionalidad de recuperación de contraseña próximamente")
+    navigate("/forgot-password")
   }
 
   return (

@@ -21,8 +21,10 @@ function App() {
                   key={index}
                   path={route.path}
                   element={
-                    route.path === "/" || route.path === "/login" ? (
-                      isAuthenticated ? (
+                    // Permitir acceso sin autenticación a login y forgot-password
+                    route.path === "/" || route.path === "/login" || route.path === "/forgot-password" ? (
+                      // Si está autenticado y trata de ir a login o forgot-password, redirigir a dashboard
+                      isAuthenticated && (route.path === "/login" || route.path === "/forgot-password") ? (
                         <Navigate to="/dashboard" />
                       ) : (
                         route.element

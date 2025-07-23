@@ -17,6 +17,7 @@ import Badges3 from "./features/Badges/pages/Badges3";
 import Ranking from "./features/Ranking/pages/Ranking";
 import Dashboard from "./features/Dashboard/pages/Dashboard";
 import LoginPage from "./features/auth/pages/LoginPage";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import RegistrarRolPage from "./features/Role/pages/RegisterRolePage";
 import RolesPage from "./features/Role/pages/RolesPage";
 import EditarRolPage from "./features/Role/pages/EditarRolePage";
@@ -32,6 +33,7 @@ import LevelsPageUpdated from "./features/ScheduledCourses/pages/LevelsPage";
 import TraineesPageUpdated from "./features/ScheduledCourses/pages/TraineesPage";
 import ProgressViewWithRealData from "./features/ScheduledCourses/pages/ProgressView";
 
+
 // Definición de rutas
 const routes = [
   {
@@ -41,6 +43,10 @@ const routes = [
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />,
   },
   {
     path: "/dashboard",
