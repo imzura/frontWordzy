@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react"
 import { RoleContext } from "../../../shared/contexts/RoleContext/RoleContext"
 import { normalizeText } from "../../../shared/utils/normalizeText"
+import { fetchWithAutoRenew } from "../../../shared/utils/authHeader"
 
 const RoleForm = ({ onSubmit, onCancel, initialData }) => {
   const { roles: existingRoles, loading, error: contextError } = useContext(RoleContext)
@@ -48,7 +49,7 @@ const RoleForm = ({ onSubmit, onCancel, initialData }) => {
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/permission")
+        const response = await fetchWithAutoRenew("http://localhost:3000/api/permission")
         const data = await response.json()
 
         const permisosObjeto = {}

@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
-import GenericTable from "../../../shared/components/Table"
 import ConfirmationModal from "../../../shared/components/ConfirmationModal"
 import { useGetCourseProgrammings } from "../hooks/useGetCoursePrograming"
 import { formatDate } from "../../../shared/utils/dateFormatter"
 import { useDeleteCourseProgramming } from "../hooks/useDeleteCoursePrograming"
 import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
 
 const columns = [
   {
@@ -132,15 +132,16 @@ const CourseProgrammingPage = () => {
             <span className="ml-2">Cargando...</span>
           </div>
         ) : (
-          <GenericTable
+          <ProtectedTable
             data={formattedPrograms}
             columns={columns}
+            module="Programacion De Cursos" // Nombre del módulo para verificar permisos
             onAdd={handleAddProgramming}
             onShow={handleShowProgramming}
             onEdit={handleEditProgramming}
             onDelete={handleDeleteProgramming}
-            showActions={{ show: true, edit: true, delete: true, add: true }}
-          />
+            tooltipText="Ver detalle del curso"
+        />
         )}
 
         {/* Modal de confirmación para eliminar programación */}

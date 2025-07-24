@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Search, Upload, X, ChevronDown } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import UserMenu from "../../../shared/components/userMenu"
 
 const Badges = () => {
   const navigate = useNavigate()
@@ -117,11 +118,12 @@ const Badges = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="max-h-screen bg-white">
       {/* Header */}
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">Insignias</h1>
+          <UserMenu />
         </div>
       </header>
 

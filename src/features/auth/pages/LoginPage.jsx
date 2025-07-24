@@ -1,27 +1,42 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import { getDefaultRouteByRole } from "../../../shared/utils/rolePermissions";
-import LoginForm from "../components/LoginForm";
-import logo from "../../../assets/logo.png";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
+import LoginForm from "../components/LoginForm"
+import logo from "../../../assets/logo.png"
 
 const LoginPage = () => {
-  const [isSuccess, setIsSuccess] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [isSuccess, setIsSuccess] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
+  // 🆕 Función para obtener la ruta por defecto según el rol
+  const getDefaultRouteByRole = (userRole) => {
+    const normalizedRole = typeof userRole === "string" ? userRole.toLowerCase() : userRole?.name?.toLowerCase()
+
+    switch (normalizedRole) {
+      case "aprendiz":
+        return "/apprentice/dashboard" // 🔄 Dashboard para aprendices
+      case "administrador":
+        return "/dashboard"
+      case "instructor":
+        return "/dashboard"
+      default:
+        return "/dashboard"
+    }
+  }
 
   const handleLoginSuccess = (userData) => {
-    setIsSuccess(true);
+    setIsSuccess(true)
 
     // Obtener la ruta por defecto según el rol
-    const defaultRoute = getDefaultRouteByRole(userData.role);
+    const defaultRoute = getDefaultRouteByRole(userData.role)
 
     // Show success alert with improved styling and animation
-    const alert = document.createElement("div");
+    const alert = document.createElement("div")
     alert.className =
-      "fixed top-4 right-4 left-4 md:left-auto md:w-96 bg-white border border-green-200 rounded-xl shadow-lg z-50 transform transition-all duration-300 ease-out translate-y-[-100%] opacity-0";
+      "fixed top-4 right-4 left-4 md:left-auto md:w-96 bg-white border border-green-200 rounded-xl shadow-lg z-50 transform transition-all duration-300 ease-out translate-y-[-100%] opacity-0"
     alert.innerHTML = `
       <div class="flex items-center p-4">
         <div class="flex-shrink-0 bg-green-100 rounded-full p-2">
@@ -34,25 +49,26 @@ const LoginPage = () => {
           <p class="text-sm text-gray-500">Bienvenido ${userData.role}...</p>
         </div>
       </div>
-    `;
-    document.body.appendChild(alert);
+    `
+    document.body.appendChild(alert)
 
     // Trigger animation
     setTimeout(() => {
-      alert.style.transform = "translateY(0)";
-      alert.style.opacity = "1";
-    }, 100);
+      alert.style.transform = "translateY(0)"
+      alert.style.opacity = "1"
+    }, 100)
 
     // Remove alert and navigate to role-specific route
     setTimeout(() => {
-      alert.style.transform = "translateY(-100%)";
-      alert.style.opacity = "0";
+      alert.style.transform = "translateY(-100%)"
+      alert.style.opacity = "0"
       setTimeout(() => {
-        alert.remove();
-        navigate(defaultRoute);
-      }, 300);
-    }, 2000);
-  };
+        alert.remove()
+        // 🆕 Usar replace para evitar volver al login
+        navigate(defaultRoute, { replace: true })
+      }, 300)
+    }, 2000)
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -85,27 +101,19 @@ const LoginPage = () => {
             className="w-full max-w-md bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-2 border-gray-50 
             animate-[fadeIn_0.5s_ease-out] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow duration-300"
           >
-            <h2 className="text-xl lg:text-2xl font-bold text-[#1F384C] mb-6 text-center">
-              Inicio de Sesión
-            </h2>
+            <h2 className="text-xl lg:text-2xl font-bold text-[#1F384C] mb-6 text-center">Inicio de Sesión</h2>
 
             <LoginForm onLoginSuccess={handleLoginSuccess} login={login} />
           </div>
         ) : (
           <div className="text-center p-4 animate-[fadeIn_0.5s_ease-out] bg-white">
-            <img
-              src={logo || "/placeholder.svg"}
-              alt="Wordzy Logo"
-              className="h-16 w-auto mx-auto"
-            />
-            <h2 className="mt-6 text-xl lg:text-2xl font-semibold text-green-600">
-              ¡Inicio de sesión exitoso!
-            </h2>
+            <img src={logo || "/placeholder.svg"} alt="Wordzy Logo" className="h-16 w-auto mx-auto" />
+            <h2 className="mt-6 text-xl lg:text-2xl font-semibold text-green-600">¡Inicio de sesión exitoso!</h2>
           </div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

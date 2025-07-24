@@ -6,13 +6,14 @@ export const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthResolved, setIsAuthResolved] = useState(false)
 
   useEffect(() => {
     const savedUser = localStorage.getItem("wordzy_user")
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser)
+        console.log("Los datops del usuario son:", userData)
         if (userData.token) {
           setUser(userData)
         } else {
@@ -23,19 +24,13 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("wordzy_user")
       }
     }
-    setIsLoading(false)
+    setIsAuthResolved(true)
   }, [])
 
   const login = (userData) => {
-    if (!userData || !userData.token) {
-      return
-    }
+    if (!userData || !userData.token) return
 
-    const userWithToken = {
-      ...userData,
-      token: userData.token,
-    }
-
+    const userWithToken = { ...userData, token: userData.token }
     setUser(userWithToken)
     localStorage.setItem("wordzy_user", JSON.stringify(userWithToken))
   }
@@ -54,11 +49,11 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     setUser,
-    isLoading,
+    isAuthenticated: !!user?.token,
+    isAuthResolved,
     login,
     logout,
     updateUser,
-    isAuthenticated: !!user?.token,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

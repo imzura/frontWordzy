@@ -2,12 +2,13 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import GenericTable from "../../../shared/components/Table"
 import InstructorDetailModal from "./InstructorDetailModal"
 import ConfirmationModal from "../../../shared/components/ConfirmationModal"
 import useGetInstructors from "../hooks/useGetInstructors"
 import useDeleteInstructor from "../hooks/useDeleteInstructor"
 import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
+import ProtectedAction from "../../../shared/components/ProtectedAction"
 
 const columns = [
   { key: "nombre", label: "Nombre" },
@@ -107,7 +108,7 @@ const InstructorsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="max-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1f384c] mx-auto mb-4"></div>
           <p className="text-[#1f384c] font-medium">Cargando instructores...</p>
@@ -119,7 +120,7 @@ const InstructorsPage = () => {
   const displayError = error && !instructors.length ? error : null
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">Instructores</h1>
@@ -132,18 +133,18 @@ const InstructorsPage = () => {
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">Error: {displayError}</div>
         )}
 
-        <GenericTable
-          data={instructors}
-          columns={columns}
-          onAdd={handleCreateInstructor}
-          onShow={handleShowInstructor}
-          onEdit={handleEditInstructor}
-          onDelete={handleDeleteInstructor}
-          title="LISTA DE INSTRUCTORES"
-          showActions={{ show: true, edit: true, delete: true, add: true }}
-          tooltipText="Ver detalle del instructor"
+        <ProtectedTable
+            data={instructors}
+            columns={columns}
+            module="Instructores" // Nombre del módulo para verificar permisos
+            onAdd={handleCreateInstructor}
+            onShow={handleShowInstructor}
+            onEdit={handleEditInstructor}
+            onDelete={handleDeleteInstructor}
+            tooltipText="Ver detalle del instructor"
         />
 
+        <ProtectedAction module="Instructores" privilege="read">
         {selectedInstructor && (
           <InstructorDetailModal
             instructor={selectedInstructor}
@@ -151,6 +152,7 @@ const InstructorsPage = () => {
             onClose={handleCloseDetailModal}
           />
         )}
+        </ProtectedAction>
       </div>
 
       <ConfirmationModal

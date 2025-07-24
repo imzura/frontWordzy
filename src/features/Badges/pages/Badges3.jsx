@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { X } from "lucide-react"
 import { FiTrash } from "react-icons/fi"
+import UserMenu from "../../../shared/components/userMenu"
 
 const Ranking = () => {
   const navigate = useNavigate()
@@ -196,10 +197,10 @@ const Ranking = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      {/* Header */}
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1f384c]">EDITAR INSIGNIAS</h1>
+          <h1 className="text-2xl font-bold text-[#1f384c]">Insignias</h1>
+          <UserMenu />
         </div>
       </header>
 

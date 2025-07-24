@@ -7,6 +7,7 @@ const ConfirmationModal = ({
   title,
   message,
   confirmText = "Confirmar",
+  cancelarText = "Cancelar",
   confirmColor = "bg-[#f44144] hover:bg-red-600",
   showButtonCancel = true,
 }) => {
@@ -27,7 +28,7 @@ const ConfirmationModal = ({
               className="px-4 py-2 border border-[#d9d9d9] rounded-[10px] text-[#627b87] hover:bg-gray-50 focus:outline-none text-sm transition-colors"
               onClick={onClose}
             >
-              Cancelar
+              {cancelarText}
             </button>
             )}
             <button

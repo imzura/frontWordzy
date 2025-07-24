@@ -1,10 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { ChevronDown } from "lucide-react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import GenericTable from "../../../shared/components/Table"
-import { useAuth } from "../../auth/hooks/useAuth"
 import EvaluationDetailModal from "../components/EvaluationDetailModal"
 import ConfirmationModal from "../../../shared/components/ConfirmationModal"
 
@@ -13,6 +10,9 @@ import useGetEvaluations from "../hooks/useGetEvaluations"
 import useDeleteEvaluation from "../hooks/useDeleteEvaluation"
 import { normalizeEvaluations } from "../services/evaluationService"
 import { isEvaluationInUse } from "../services/courseProgrammingService"
+import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
+import ProtectedAction from "../../../shared/components/ProtectedAction"
 
 const columns = [
   { key: "nombre", label: "Nombre" },
@@ -49,11 +49,9 @@ const Evaluations = () => {
 
   const evaluationsData = normalizeEvaluations(rawEvaluations)
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isInUseModalOpen, setIsInUseModalOpen] = useState(false) // Nuevo estado para la alerta
   const [successMessage, setSuccessMessage] = useState("")
   const [successTitle, setSuccessTitle] = useState("")
@@ -63,9 +61,6 @@ const Evaluations = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
 
-  const { logout } = useAuth()
-  const dropdownRef = useRef(null)
-
   useEffect(() => {
     setIsLoading(fetchLoading || deleteLoading)
   }, [fetchLoading, deleteLoading])
@@ -74,17 +69,6 @@ const Evaluations = () => {
     const error = fetchError || deleteError
     setErrorMessage(error ? `Error: ${error}` : "")
   }, [fetchError, deleteError])
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
 
   const handleAddEvaluation = () => {
     navigate("/programacion/evaluaciones/crear")
@@ -137,41 +121,12 @@ const Evaluations = () => {
     }
   }
 
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false)
-    setShowLogoutConfirm(true)
-  }
-
-  const handleLogout = () => {
-    logout()
-    navigate("/login")
-  }
-
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">Evaluaciones</h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <span>Administrador</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          <UserMenu />
         </div>
       </header>
 
@@ -186,24 +141,27 @@ const Evaluations = () => {
             <span className="ml-2">Cargando...</span>
           </div>
         ) : (
-          <GenericTable
+          <ProtectedTable
             data={evaluationsData}
             columns={columns}
+            module="Evaluaciones" // Nombre del módulo para verificar permisos
             onAdd={handleAddEvaluation}
             onShow={handleShowEvaluation}
             onEdit={handleEditEvaluation}
             onDelete={handleDeleteEvaluation}
-            title="Listado de Evaluaciones"
-            showActions={{ show: true, edit: true, delete: true, add: true }}
-          />
+            tooltipText="Ver detalle de la evaluación"
+        />
         )}
       </div>
 
+      {/* Modales */}
+      <ProtectedAction module="Evaluaciones" privilege="read">
       <EvaluationDetailModal
         evaluation={currentEvaluation}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
       />
+      </ProtectedAction>
 
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
@@ -228,16 +186,6 @@ const Evaluations = () => {
         confirmText="Cerrar"
         confirmColor="bg-[#46ae69] hover:bg-green-600"
         showButtonCancel={false}
-      />
-
-      <ConfirmationModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
-        title="Cerrar Sesión"
-        message="¿Está seguro de que desea cerrar la sesión actual?"
-        confirmText="Cerrar Sesión"
-        confirmColor="bg-[#f44144] hover:bg-red-600"
       />
 
       {/* Nuevo modal de alerta */}

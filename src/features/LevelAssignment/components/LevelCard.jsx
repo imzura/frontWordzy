@@ -1,5 +1,7 @@
 "use client";
 
+import ProtectedAction from "../../../shared/components/ProtectedAction";
+
 const LevelCard = ({
   nivel,
   isActive,
@@ -80,6 +82,7 @@ const LevelCard = ({
         </div>
 
         {/* Toggle switch */}
+        <ProtectedAction module="Asignación de Niveles" privilege="assign">
         <label className="relative inline-flex items-center cursor-pointer group">
           <input
             type="checkbox"
@@ -108,6 +111,7 @@ const LevelCard = ({
     `}
           ></div>
         </label>
+        </ProtectedAction>
       </div>
 
       {/* Indicadores de estado */}

@@ -1,33 +1,27 @@
 "use client"
 
-// Actualizar las importaciones
-import { useContext } from "react"
+import { useAuth } from "../../features/auth/hooks/useAuth"
 import { Navigate } from "react-router-dom"
-import { AuthContext } from "../contexts/AuthContext"
-import { hasRouteAccess, getDefaultRouteByRole } from "../utils/rolePermissions"
 
-const ProtectedRoute = ({ children, requiredRoute }) => {
-  const { user, isLoading } = useContext(AuthContext)
+const ProtectedRoute = ({ children, requiredRoute, allowedRoles = [] }) => {
+  const { isAuthenticated, user } = useAuth()
 
-  // Mostrar loading mientras se verifica la autenticación
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1f384c]"></div>
-      </div>
-    )
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />
   }
 
-  // Si no hay usuario o no hay token, redirigir al login
-  if (!user || !user.token) {
-    return <Navigate to="/login" replace />
-  }
+  // 🆕 Verificar roles permitidos si se especifican
+  if (allowedRoles.length > 0) {
+    const userRole = user?.role || user?.user?.role || user?.userType
+    const normalizedUserRole = typeof userRole === "string" ? userRole.toLowerCase() : userRole?.name?.toLowerCase()
 
-  // Si se especifica una ruta requerida, verificar acceso
-  if (requiredRoute && !hasRouteAccess(user.role, requiredRoute)) {
-    // Redirigir a la ruta por defecto del rol
-    const defaultRoute = getDefaultRouteByRole(user.role)
-    return <Navigate to={defaultRoute} replace />
+    const hasAllowedRole = allowedRoles.some((role) => role.toLowerCase() === normalizedUserRole)
+
+    if (!hasAllowedRole) {
+      // Redirigir según el rol del usuario
+      const defaultRoute = normalizedUserRole === "aprendiz" ? "/apprentice/ranking" : "/dashboard"
+      return <Navigate to={defaultRoute} />
+    }
   }
 
   return children

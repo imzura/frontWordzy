@@ -1,26 +1,16 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { ChevronDown } from "lucide-react"
-import { useAuth } from "../../auth/hooks/useAuth"
-import ConfirmationModal from "../../../shared/components/ConfirmationModal"
+import { useState, useEffect } from "react"
 import GenericTable from "../../../shared/components/Table"
 import FeedbackFilters from "../components/FeedbackFilters"
 import { useFeedbackData } from "../hooks/useFeedbackData"
 import { useFeedbackSearch } from "../hooks/useFeedbackSearch"
 import StudentDetailPanel from "../components/StudentDetailPanel"
 import { useStudentDetails } from "../hooks/useStudentDetails"
+import UserMenu from "../../../shared/components/userMenu"
 
 const Feedback = () => {
   console.log("🚀 Renderizando componente Feedback")
-
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const dropdownRef = useRef(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedFeedbackItem, setSelectedFeedbackItem] = useState(null)
 
@@ -59,28 +49,6 @@ const Feedback = () => {
     },
   ]
 
-  // Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false)
-    setShowLogoutConfirm(true)
-  }
-
-  const handleLogout = () => {
-    logout()
-    navigate("/login")
-  }
-
   const handleSearch = (filters) => {
     console.log("🔍 Ejecutando búsqueda con filtros:", filters)
     searchFeedback(filters)
@@ -96,7 +64,7 @@ const Feedback = () => {
   if (dataLoading) {
     console.log("⏳ Mostrando pantalla de carga")
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1f384c] mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Cargando módulo de retroalimentación...</p>
@@ -248,34 +216,11 @@ const Feedback = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6 shadow-sm">
+    <div className="max-h-screen">
+      <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-[#1f384c]">Retroalimentación</h1>
-            <p className="text-sm text-gray-600 mt-1">Gestión de retroalimentación de actividades de inglés</p>
-            {dataError && <p className="text-sm text-orange-600 mt-1">⚠️ {dataError}</p>}
-          </div>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span>Administrador</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-[#1f384c]">Retroalimentación</h1>
+          <UserMenu />
         </div>
       </header>
 
@@ -347,17 +292,6 @@ const Feedback = () => {
           </div>
         </div>
       )}
-
-      {/* Modal de confirmación para cerrar sesión */}
-      <ConfirmationModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
-        title="Cerrar Sesión"
-        message="¿Está seguro de que desea cerrar la sesión actual?"
-        confirmButtonText="Cerrar Sesión"
-        confirmButtonClass="bg-[#f44144] hover:bg-red-600"
-      />
     </div>
   )
 }

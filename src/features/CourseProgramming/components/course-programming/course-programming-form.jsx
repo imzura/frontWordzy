@@ -415,7 +415,7 @@ export default function CourseProgrammingForm() {
     <div className="max-w-10xl mx-auto p-7 bg-white rounded-lg shadow">
       <header className="mb-6">
         <h1 className="text-xl font-bold text-[#1f384c] mb-4">
-          {isEditMode ? "EDITAR PROGRAMACIÓN" : "Añadir Programación"}
+          {isEditMode ? "Editar Programación" : "Añadir Programación"}
         </h1>
       </header>
 
@@ -554,6 +554,7 @@ export default function CourseProgrammingForm() {
         message="¿Está seguro que desea cancelar? Se perderán los cambios no guardados."
         confirmText="Cancelar Cambios"
         confirmColor="bg-[#f44144] hover:bg-red-600"
+        cancelarText="Seguir editando"
       />
 
       <ConfirmationModal

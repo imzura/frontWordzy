@@ -43,7 +43,9 @@ const UserMenu = () => {
         >
           <UserIcon className="w-5 h-5" />
           <span className="truncate max-w-[150px] font-medium">
-            {user?.name || "Usuario"}
+            {user?.name
+              ? user.name.split(" ").slice(0, 1).join(" ")
+              : "Usuario"}
           </span>
           <ChevronDown
             className={`w-5 h-5 transition-transform duration-200 ${

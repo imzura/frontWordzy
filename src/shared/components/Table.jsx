@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import React from "react"
+import React from "react";
 import {
   FiSearch,
   FiEdit,
@@ -8,10 +8,11 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiEye,
-  FiDownload
-} from "react-icons/fi"
-import { MdAddCircleOutline } from "react-icons/md"
-import Tooltip from "../components/Tooltip"
+  FiDownload,
+  FiRefreshCw,
+} from "react-icons/fi";
+import { MdAddCircleOutline } from "react-icons/md";
+import Tooltip from "../components/Tooltip";
 
 const GenericTable = ({
   data = [],
@@ -20,36 +21,46 @@ const GenericTable = ({
   onShow,
   onEdit,
   onDelete,
+  onMassiveUpdate, // Nueva prop
   defaultItemsPerPage = 8,
-  showActions = { show: false, edit: true, delete: true, add: true },
+  showActions = {
+    show: false,
+    edit: true,
+    delete: true,
+    add: true,
+    massiveUpdate: false,
+  }, // Agregado massiveUpdate
   tooltipText = "Ver detalle",
   showSearch = true,
   showPagination = true,
   exportToExcel = { enabled: false, filename: "datos", exportFunction: null },
+  massiveUpdate = { enabled: false, buttonText: "Actualización Masiva" }, // Nueva prop para configurar el botón
 }) => {
   // State management
-  const [searchTerm, setSearchTerm] = React.useState("")
-  const [currentPage, setCurrentPage] = React.useState(1)
-  const [itemsPerPage] = React.useState(defaultItemsPerPage)
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [itemsPerPage] = React.useState(defaultItemsPerPage);
 
   // Filter data based on search term
   const filteredData = React.useMemo(() => {
-    if (!showSearch) return data
+    if (!showSearch) return data;
 
-    return data.filter(item =>
-      columns.some(column =>
-        String(item[column.key] ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+    return data.filter((item) =>
+      columns.some((column) =>
+        String(item[column.key] ?? "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
       )
-    )
-  }, [data, searchTerm, showSearch, columns])
+    );
+  }, [data, searchTerm, showSearch, columns]);
 
   // Pagination logic
   const { currentData, totalPages } = React.useMemo(() => {
     if (!showPagination) {
       return {
         currentData: filteredData,
-        totalPages: 1
-      }
+        totalPages: 1,
+      };
     }
 
     return {
@@ -57,18 +68,22 @@ const GenericTable = ({
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
       ),
-      totalPages: Math.ceil(filteredData.length / itemsPerPage) || 1
-    }
-  }, [filteredData, currentPage, itemsPerPage, showPagination])
+      totalPages: Math.ceil(filteredData.length / itemsPerPage) || 1,
+    };
+  }, [filteredData, currentPage, itemsPerPage, showPagination]);
 
   // Event handlers
   const handlePageChange = (pageNumber) => {
-    setCurrentPage(Math.max(1, Math.min(pageNumber, totalPages)))
-  }
+    setCurrentPage(Math.max(1, Math.min(pageNumber, totalPages)));
+  };
 
   const handleExportToExcel = () => {
-    exportToExcel.exportFunction?.(filteredData)
-  }
+    exportToExcel.exportFunction?.(filteredData);
+  };
+
+  const handleMassiveUpdate = () => {
+    onMassiveUpdate?.();
+  };
 
   // Render helpers
   const renderTableHeader = () => (
@@ -90,7 +105,7 @@ const GenericTable = ({
         )}
       </tr>
     </thead>
-  )
+  );
 
   const renderTableBody = () => (
     <tbody>
@@ -101,9 +116,13 @@ const GenericTable = ({
               <td
                 key={`cell-${item._id || item.id}-${column.key}`}
                 className="px-2 py-2 text-sm text-left border-b border-gray-200 text-gray-700 truncate"
-                title={column.render ? String(column.render(item)) : String(item[column.key] ?? '')}
+                title={
+                  column.render
+                    ? String(column.render(item))
+                    : String(item[column.key] ?? "")
+                }
               >
-                {column.render ? column.render(item) : (item[column.key] ?? '')}
+                {column.render ? column.render(item) : item[column.key] ?? ""}
               </td>
             ))}
             {renderActionButtons(item)}
@@ -128,10 +147,11 @@ const GenericTable = ({
         </>
       )}
     </tbody>
-  )
+  );
 
   const renderActionButtons = (item) => {
-    if (!showActions.show && !showActions.edit && !showActions.delete) return null
+    if (!showActions.show && !showActions.edit && !showActions.delete)
+      return null;
 
     return (
       <td className="px-2 py-2 border-b border-gray-200">
@@ -172,11 +192,11 @@ const GenericTable = ({
           )}
         </div>
       </td>
-    )
-  }
+    );
+  };
 
   const renderPagination = () => {
-    if (!showPagination) return null
+    if (!showPagination) return null;
 
     return (
       <div className="flex justify-between items-center text-xs text-gray-600">
@@ -205,13 +225,14 @@ const GenericTable = ({
           </div>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="bg-white rounded-[10px] shadow-sm p-2 flex flex-col min-h-0">
       {/* Table Controls */}
       <div className="flex justify-between items-center mb-4">
+        {/* Lado izquierdo: Buscador */}
         <div className="flex items-center gap-3">
           {showSearch && (
             <div className="relative w-64">
@@ -221,12 +242,25 @@ const GenericTable = ({
                 className="w-full pl-3 pr-8 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200"
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  setCurrentPage(1) // Reset to first page on search
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
                 }}
               />
               <FiSearch className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
             </div>
+          )}
+        </div>
+
+        {/* Lado derecho: Actualización masiva + Exportar + Añadir */}
+        <div className="flex items-center gap-3">
+          {showActions.massiveUpdate && massiveUpdate.enabled && (
+            <button
+              onClick={handleMassiveUpdate}
+              className="flex items-center gap-2 px-4 py-2 bg-[#1f384c] text-white rounded-lg hover:bg-[#2a4a5e] transition-colors text-sm"
+            >
+              <FiRefreshCw size={16} />
+              <span>{massiveUpdate.buttonText}</span>
+            </button>
           )}
 
           {exportToExcel.enabled && (
@@ -238,17 +272,17 @@ const GenericTable = ({
               <span>Exportar a Excel</span>
             </button>
           )}
-        </div>
 
-        {showActions.add && (
-          <button
-            onClick={onAdd}
-            className="flex items-center gap-1 bg-green-500 text-white px-3 py-1.5 text-sm rounded-lg hover:bg-green-600"
-          >
-            <MdAddCircleOutline size={16} />
-            <span>Añadir</span>
-          </button>
-        )}
+          {showActions.add && (
+            <button
+              onClick={onAdd}
+              className="flex items-center gap-1 bg-green-500 text-white px-3 py-1.5 text-sm rounded-lg hover:bg-green-600"
+            >
+              <MdAddCircleOutline size={16} />
+              <span>Añadir</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -262,7 +296,7 @@ const GenericTable = ({
       {/* Pagination */}
       {renderPagination()}
     </div>
-  )
-}
+  );
+};
 
-export default GenericTable
+export default GenericTable;

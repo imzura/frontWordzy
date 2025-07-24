@@ -2,14 +2,15 @@
 "use client"
 
 import { useState } from "react"
-import { RefreshCw } from "lucide-react"
-import GenericTable from "../../../shared/components/Table"
 import CourseDetailModal from "./CourseDetailModal"
 import MassiveUpdateModal from "../componentes/MassiveUpdateModal"
 
 // Hooks
 import { useGetCourses } from "../hooks/useGetCourses"
 import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
+import { formatDate } from "../../../shared/utils/dateFormatter"
+import ProtectedAction from "../../../shared/components/ProtectedAction"
 
 const columns = [
   { key: "code", label: "Código" },
@@ -19,6 +20,7 @@ const columns = [
   render: (item) => (
     <div className="whitespace-normal break-words max-w-md">{item.fk_programs}</div>
   ),
+  width: "20%",
 },
 {
   key: "area",
@@ -43,12 +45,12 @@ const columns = [
   {
     key: "start_date",
     label: "Fecha Inicio",
-    render: (item) => new Date(item.start_date).toLocaleDateString("es-ES"),
+    render: (item) => formatDate(item.start_date),
   },
   {
     key: "end_date",
     label: "Fecha Fin",
-    render: (item) => new Date(item.end_date).toLocaleDateString("es-ES"),
+    render: (item) => formatDate(item.end_date),
   },
   {
     key: "course_status",
@@ -114,7 +116,7 @@ export default function Courses() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">Fichas</h1>
@@ -126,37 +128,32 @@ export default function Courses() {
         {/* Mostrar errores si los hay */}
         {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
 
-        {/* Botón de Actualización Masiva */}
-        <div className="mb-6 flex justify-end">
-          <button
-            onClick={handleMassiveUpdate}
-            className="flex items-center gap-2 bg-[#1f384c] text-white px-4 py-2 rounded-lg hover:bg-[#2a4a5e] transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Actualización Masiva
-          </button>
-        </div>
-
-        <GenericTable
-          data={courses}
-          columns={columns}
-          onShow={handleShowCourse}
-          title="LISTA DE FICHAS"
-          showActions={{ show: true, edit: false, delete: false, add: false }}
-          tooltipText="Ver detalle de la ficha"
+        <ProtectedTable
+            data={courses}
+            columns={columns}
+            module="Fichas" // Nombre del módulo para verificar permisos
+            onShow={handleShowCourse}
+            showActions={{ show: true, massiveUpdate: true, edit: false, delete: false, add: false }}
+            tooltipText="Ver detalle de la ficha"
+            onMassiveUpdate={handleMassiveUpdate}
+            massiveUpdate={{ enabled: true, buttonText: "Actualización Masiva" }}
         />
 
+        <ProtectedAction module="Fichas" privilege="read">
         {/* Modal de detalle del curso */}
         {selectedCourse && (
           <CourseDetailModal course={selectedCourse} isOpen={isDetailModalOpen} onClose={handleCloseDetailModal} />
         )}
+        </ProtectedAction>
 
+        <ProtectedAction module="Fichas" privilege="update">
         {/* Modal de actualización masiva */}
         <MassiveUpdateModal
           isOpen={showMassiveUpdateModal}
           onClose={() => setShowMassiveUpdateModal(false)}
           onComplete={handleMassiveUpdateComplete}
         />
+        </ProtectedAction>
       </div>
     </div>
   )

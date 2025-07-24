@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronDown } from "lucide-react";
-import { useAuth } from "../../auth/hooks/useAuth";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import GenericTable from "../../../shared/components/Table";
-import ConfirmationModal from "../../../shared/components/ConfirmationModal";
 import { useApprenticesWithProgress } from "../hooks/use-apprentices-with-progress";
 import ProgrammingDebugInfo from "./programming-debug-info";
+import UserMenu from "../../../shared/components/userMenu";
+import ProtectedTable from "../../../shared/components/ProtectedTable";
 
 const columns = [
   {
@@ -74,17 +73,13 @@ const columns = [
 ];
 
 const TraineesPageUpdated = () => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const { logout } = useAuth();
   const navigate = useNavigate();
   const [filteredTrainees, setFilteredTrainees] = useState([]);
   const [fichaNombre, setFichaNombre] = useState("");
   const [fichaPrograma, setFichaPrograma] = useState("");
   const [nivelNombre, setNivelNombre] = useState("");
   const [nivelNumber, setNivelNumber] = useState(null);
-  const dropdownRef = useRef(null);
   const [fichaId, setFichaId] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -229,27 +224,6 @@ const TraineesPageUpdated = () => {
     calculateStatsForAllApprentices();
   }, [apprentices, nivelNumber, fetchApprenticeStats]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false);
-    setShowLogoutConfirm(true);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const handleShowProgress = (trainee) => {
     sessionStorage.setItem("selectedTraineeId", trainee.id || trainee._id);
     sessionStorage.setItem("selectedTraineeData", JSON.stringify(trainee));
@@ -270,32 +244,9 @@ const TraineesPageUpdated = () => {
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
           <div className="container mx-auto flex justify-between items-center">
             <h1 className="text-2xl font-bold text-[#1f384c]">
-              Cursos Programados
+              Cursos programados
             </h1>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                <span>Administrador</span>
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                  <button
-                    onClick={handleLogoutClick}
-                    className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                  >
-                    Cerrar Sesión
-                  </button>
-                </div>
-              )}
-            </div>
+            <UserMenu />
           </div>
         </header>
         <div className="flex justify-center my-8">
@@ -325,36 +276,13 @@ const TraineesPageUpdated = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">
-            Cursos Programados
+            Cursos programados
           </h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <span>Administrador</span>
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          <UserMenu />
         </div>
       </header>
 
@@ -441,9 +369,10 @@ const TraineesPageUpdated = () => {
           )}
         </div>
 
-        <GenericTable
+        <ProtectedTable
           data={filteredTrainees}
           columns={columns}
+          module= "Cursos Programados"
           onShow={handleShowProgress}
           tooltipText="Ver Progreso"
           showActions={{ show: true, edit: false, delete: false, add: false }}
@@ -507,15 +436,6 @@ const TraineesPageUpdated = () => {
               }, 0);
             },
           }}
-        />
-
-        <ConfirmationModal
-          isOpen={showLogoutConfirm}
-          onClose={() => setShowLogoutConfirm(false)}
-          onConfirm={handleLogout}
-          title="Cerrar Sesión"
-          message="¿Está seguro de que desea cerrar la sesión actual?"
-          confirmText="Cerrar Sesión"
         />
       </div>
     </div>

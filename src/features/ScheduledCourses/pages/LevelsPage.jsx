@@ -1,14 +1,13 @@
-"use client"
+"use client";
 
-import { useNavigate } from "react-router-dom"
-import GenericTable from "../../../shared/components/Table"
-import { useState, useEffect, useRef } from "react"
-import { ChevronDown } from "lucide-react"
-import { useAuth } from "../../auth/hooks/useAuth"
-import ConfirmationModal from "../../../shared/components/ConfirmationModal"
-import { useGetApprenticesByFicha } from "../hooks/use-get-apprentices-by-ficha"
-import { useGetProgrammingByProgramName } from "../hooks/use-get-programming-by-program-name"
-import ProgrammingDebugInfo from "./programming-debug-info"
+import { useNavigate } from "react-router-dom";
+import GenericTable from "../../../shared/components/Table";
+import { useState, useEffect } from "react";
+import { useGetApprenticesByFicha } from "../hooks/use-get-apprentices-by-ficha";
+import { useGetProgrammingByProgramName } from "../hooks/use-get-programming-by-program-name";
+import ProgrammingDebugInfo from "./programming-debug-info";
+import UserMenu from "../../../shared/components/userMenu";
+import ProtectedTable from "../../../shared/components/ProtectedTable";
 
 const columns = [
   { key: "name", label: "Nivel", width: "15%" },
@@ -23,38 +22,43 @@ const columns = [
       <div className="flex items-center gap-2 w-full">
         <div className="flex-1 min-w-[100px]">
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-green-500 h-2 rounded-full" style={{ width: item.progreso }}></div>
+            <div
+              className="bg-green-500 h-2 rounded-full"
+              style={{ width: item.progreso }}
+            ></div>
           </div>
         </div>
-        <span className="text-sm text-gray-600 w-13 text-right">{item.progreso}</span>
+        <span className="text-sm text-gray-600 w-13 text-right">
+          {item.progreso}
+        </span>
       </div>
     ),
   },
-]
+];
 
 const LevelsPageUpdated = () => {
-  const navigate = useNavigate()
-  const [levels, setLevels] = useState([])
-  const [fichaNombre, setFichaNombre] = useState("")
-  const [fichaPrograma, setFichaPrograma] = useState("")
-  const [fichaId, setFichaId] = useState(null)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const [showDebug, setShowDebug] = useState(false)
-  const { logout } = useAuth()
-  const dropdownRef = useRef(null)
+  const navigate = useNavigate();
+  const [levels, setLevels] = useState([]);
+  const [fichaNombre, setFichaNombre] = useState("");
+  const [fichaPrograma, setFichaPrograma] = useState("");
+  const [fichaId, setFichaId] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Hooks para obtener datos
   const {
     programming,
     loading: programmingLoading,
     error: programmingError,
-  } = useGetProgrammingByProgramName(fichaPrograma)
-  const { apprentices, loading: apprenticesLoading, error: apprenticesError } = useGetApprenticesByFicha(fichaNombre)
+  } = useGetProgrammingByProgramName(fichaPrograma);
+  const {
+    apprentices,
+    loading: apprenticesLoading,
+    error: apprenticesError,
+  } = useGetApprenticesByFicha(fichaNombre);
 
   // Función para extraer todas las evaluaciones de un nivel
   const getEvaluationsFromLevel = (level) => {
-    const evaluations = []
+    const evaluations = [];
 
     if (level.topics && level.topics.length > 0) {
       level.topics.forEach((topic) => {
@@ -66,8 +70,8 @@ const LevelsPageUpdated = () => {
               type: "activity",
               value: activity.value,
               topicId: topic.topicId,
-            })
-          })
+            });
+          });
         }
 
         // Agregar exámenes
@@ -78,101 +82,111 @@ const LevelsPageUpdated = () => {
               type: "exam",
               value: exam.value,
               topicId: topic.topicId,
-            })
-          })
+            });
+          });
         }
-      })
+      });
     }
 
-    return evaluations
-  }
+    return evaluations;
+  };
 
   // Función para obtener progreso de todos los aprendices de la ficha
   const fetchAllApprenticesProgress = async () => {
-    if (!apprentices.length) return []
+    if (!apprentices.length) return [];
 
     try {
       const allProgress = await Promise.all(
         apprentices.map(async (apprentice) => {
-          const apprenticeId = apprentice._id || apprentice.id
-          const response = await fetch(`http://localhost:3000/api/apprentice-progress?apprenticeId=${apprenticeId}`)
-          const data = await response.json()
+          const apprenticeId = apprentice._id || apprentice.id;
+          const response = await fetch(
+            `http://localhost:3000/api/apprentice-progress?apprenticeId=${apprenticeId}`
+          );
+          const data = await response.json();
           return {
             apprenticeId,
             progress: data.success ? data.data : [],
-          }
-        }),
-      )
-      return allProgress
+          };
+        })
+      );
+      return allProgress;
     } catch (error) {
-      console.error("Error fetching all apprentices progress:", error)
-      return []
+      console.error("Error fetching all apprentices progress:", error);
+      return [];
     }
-  }
+  };
 
   useEffect(() => {
     // Recuperar la ficha seleccionada de sessionStorage
-    const selectedFichaId = sessionStorage.getItem("selectedFichaId")
-    const selectedFichaNombre = sessionStorage.getItem("selectedFichaNombre")
-    const selectedFichaPrograma = sessionStorage.getItem("selectedFichaPrograma")
+    const selectedFichaId = sessionStorage.getItem("selectedFichaId");
+    const selectedFichaNombre = sessionStorage.getItem("selectedFichaNombre");
+    const selectedFichaPrograma = sessionStorage.getItem(
+      "selectedFichaPrograma"
+    );
 
     if (selectedFichaId) {
-      setFichaId(Number.parseInt(selectedFichaId))
-      setFichaNombre(selectedFichaNombre || `Ficha ${selectedFichaId}`)
-      setFichaPrograma(selectedFichaPrograma || "")
+      setFichaId(Number.parseInt(selectedFichaId));
+      setFichaNombre(selectedFichaNombre || `Ficha ${selectedFichaId}`);
+      setFichaPrograma(selectedFichaPrograma || "");
     } else {
-      navigate("/progreso/cursosProgramados")
+      navigate("/progreso/cursosProgramados");
     }
-  }, [navigate])
+  }, [navigate]);
 
   useEffect(() => {
     const calculateLevelsProgress = async () => {
       if (programming && !programmingLoading && !apprenticesLoading) {
         // Obtener progreso de todos los aprendices
-        const allApprenticesProgress = await fetchAllApprenticesProgress()
+        const allApprenticesProgress = await fetchAllApprenticesProgress();
 
         if (programming.levels && programming.levels.length > 0) {
           const processedLevels = programming.levels.map((level, index) => {
-            const nivelNumero = index + 1
-            const evaluacionesProgramadas = getEvaluationsFromLevel(level)
-            const topicsProgramados = level.topics?.length || 0
+            const nivelNumero = index + 1;
+            const evaluacionesProgramadas = getEvaluationsFromLevel(level);
+            const topicsProgramados = level.topics?.length || 0;
 
             // Calcular progreso promedio de todos los aprendices en este nivel
-            let totalPorcentajeCompletitud = 0
-            let aprendicesConProgreso = 0
+            let totalPorcentajeCompletitud = 0;
+            let aprendicesConProgreso = 0;
 
             if (apprentices.length > 0 && evaluacionesProgramadas.length > 0) {
               allApprenticesProgress.forEach(({ apprenticeId, progress }) => {
-                const evaluacionesRealizadas = progress.filter((p) => p.level === nivelNumero)
+                const evaluacionesRealizadas = progress.filter(
+                  (p) => p.level === nivelNumero
+                );
 
                 // Contar evaluaciones APROBADAS vs programadas
-                let evaluacionesAprobadas = 0
+                let evaluacionesAprobadas = 0;
                 evaluacionesProgramadas.forEach((evalProgramada) => {
-                  const evalId = evalProgramada.evaluationId
+                  const evalId = evalProgramada.evaluationId;
                   const evalRealizada = evaluacionesRealizadas.find(
                     (er) =>
                       (er.evaluationId === evalId ||
                         er.evaluationId?._id === evalId ||
                         er.evaluationId?.toString() === evalId?.toString()) &&
-                      er.passed === true, // SOLO CONTAR SI ESTÁ APROBADA
-                  )
+                      er.passed === true // SOLO CONTAR SI ESTÁ APROBADA
+                  );
 
                   if (evalRealizada) {
-                    evaluacionesAprobadas++ // Solo cuenta si está aprobada
+                    evaluacionesAprobadas++; // Solo cuenta si está aprobada
                   }
-                })
+                });
 
                 // Porcentaje de completitud para este aprendiz (basado en evaluaciones aprobadas)
-                const porcentajeCompletitud = (evaluacionesAprobadas / evaluacionesProgramadas.length) * 100
-                totalPorcentajeCompletitud += porcentajeCompletitud
-                aprendicesConProgreso++ // Contar TODOS los aprendices, incluso los que tienen 0%
-              })
+                const porcentajeCompletitud =
+                  (evaluacionesAprobadas / evaluacionesProgramadas.length) *
+                  100;
+                totalPorcentajeCompletitud += porcentajeCompletitud;
+                aprendicesConProgreso++; // Contar TODOS los aprendices, incluso los que tienen 0%
+              });
             }
 
             // CAMBIO CRÍTICO: El promedio debe incluir TODOS los aprendices de la ficha
             // Si un aprendiz no tiene evaluaciones aprobadas, su progreso es 0%
             const promedioProgreso =
-              apprentices.length > 0 ? Math.round(totalPorcentajeCompletitud / apprentices.length) : 0
+              apprentices.length > 0
+                ? Math.round(totalPorcentajeCompletitud / apprentices.length)
+                : 0;
 
             return {
               id: level._id,
@@ -182,78 +196,40 @@ const LevelsPageUpdated = () => {
               nivel: nivelNumero,
               evaluacionesProgramadas: evaluacionesProgramadas.length,
               topicsProgramados: topicsProgramados,
-            }
-          })
+            };
+          });
 
-          setLevels(processedLevels)
+          setLevels(processedLevels);
         } else {
-          setLevels([])
+          setLevels([]);
         }
       }
-    }
+    };
 
-    calculateLevelsProgress()
-  }, [programming, programmingLoading, apprentices, apprenticesLoading])
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false)
-    setShowLogoutConfirm(true)
-  }
-
-  const handleLogout = () => {
-    logout()
-    navigate("/login")
-  }
+    calculateLevelsProgress();
+  }, [programming, programmingLoading, apprentices, apprenticesLoading]);
 
   const handleShowAprendices = (nivel) => {
     // Guardar el nivel seleccionado en sessionStorage
-    sessionStorage.setItem("selectedNivelId", nivel.id)
-    sessionStorage.setItem("selectedNivelNombre", nivel.name)
-    sessionStorage.setItem("selectedNivelNumber", nivel.nivel)
-    navigate("/progreso/cursosProgramados/niveles/aprendices")
-  }
+    sessionStorage.setItem("selectedNivelId", nivel.id);
+    sessionStorage.setItem("selectedNivelNombre", nivel.name);
+    sessionStorage.setItem("selectedNivelNumber", nivel.nivel);
+    navigate("/progreso/cursosProgramados/niveles/aprendices");
+  };
 
   const handleBack = () => {
-    navigate("/progreso/cursosProgramados")
-  }
+    navigate("/progreso/cursosProgramados");
+  };
 
   if (programmingLoading || apprenticesLoading) {
     return (
       <div className="min-h-screen">
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
           <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#1f384c]">Cursos Programados</h1>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                <span>Administrador</span>
-                <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                  <button
-                    onClick={handleLogoutClick}
-                    className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                  >
-                    Cerrar Sesión
-                  </button>
-                </div>
-              )}
-            </div>
+            <h1 className="text-2xl font-bold text-[#1f384c]">
+              Cursos programados
+            </h1>
+            <UserMenu />
           </div>
         </header>
         <div className="flex justify-center my-8">
@@ -261,34 +237,17 @@ const LevelsPageUpdated = () => {
           <span className="ml-2">Cargando...</span>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1f384c]">Cursos Programados</h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <span>Administrador</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-[#1f384c]">
+            Cursos programados
+          </h1>
+          <UserMenu />
         </div>
       </header>
 
@@ -315,8 +274,12 @@ const LevelsPageUpdated = () => {
         {(programmingError || apprenticesError) && (
           <div className="mb-4 p-4 bg-red-50 rounded-lg">
             <h4 className="font-semibold text-red-800">❌ ¡ERROR!</h4>
-            {programmingError && <p className="text-red-600">{programmingError}</p>}
-            {apprenticesError && <p className="text-red-600">{apprenticesError}</p>}
+            {programmingError && (
+              <p className="text-red-600">{programmingError}</p>
+            )}
+            {apprenticesError && (
+              <p className="text-red-600">{apprenticesError}</p>
+            )}
           </div>
         )}
 
@@ -328,31 +291,24 @@ const LevelsPageUpdated = () => {
               <span className="font-medium">Ficha:</span> {fichaNombre}
             </div>
             <div>
-              <span className="font-medium">Programa:</span> {fichaPrograma || "No especificado"}
+              <span className="font-medium">Programa:</span>{" "}
+              {fichaPrograma || "No especificado"}
             </div>
           </div>
         </div>
 
         {/* Tabla de niveles */}
-        <GenericTable
+        <ProtectedTable
           data={levels}
           columns={columns}
+          module="Cursos Programados" // Nombre del módulo para verificar permisos
           onShow={handleShowAprendices}
           tooltipText="Ver Aprendices"
-          showActions={{ show: true, edit: false, delete: false, add: false }}
-        />
-
-        <ConfirmationModal
-          isOpen={showLogoutConfirm}
-          onClose={() => setShowLogoutConfirm(false)}
-          onConfirm={handleLogout}
-          title="Cerrar Sesión"
-          message="¿Está seguro de que desea cerrar la sesión actual?"
-          confirmText="Cerrar Sesión"
+          showActions={{show: true, edit: false, delete: false, add: false }}
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LevelsPageUpdated
+export default LevelsPageUpdated;

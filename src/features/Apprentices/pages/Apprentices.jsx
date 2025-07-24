@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { RefreshCw } from "lucide-react"
-import GenericTable from "../../../shared/components/Table"
 import ApprenticeDetailModal from "./ApprenticeDetailModal"
 import ApprenticeProgressModal from "./ApprenticeProgressModal"
 import useGetApprentices from "../hooks/useGetApprentices"
 import MassiveUpdateModal from "../components/MassiveUpdateModal"
 import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
+import ProtectedAction from "../../../shared/components/ProtectedAction"
 
 const columns = [
   { key: "nombre", label: "Nombre" },
@@ -119,7 +119,7 @@ const Apprentices = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">Aprendices</h1>
@@ -131,32 +131,19 @@ const Apprentices = () => {
         {/* Mostrar errores si los hay */}
         {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
 
-        {/* Botón de Actualización Masiva */}
-        <div className="mb-6 flex justify-end">
-          <button
-            onClick={handleMassiveUpdate}
-            disabled={isRefreshing || showMassiveUpdateModal}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isRefreshing || showMassiveUpdateModal
-                ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                : "bg-[#1f384c] text-white hover:bg-[#2a4a5e]"
-            }`}
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            {isRefreshing ? "Actualizando..." : "Actualización Masiva"}
-          </button>
-        </div>
-
-        <GenericTable
-          data={apprentices}
-          columns={columns}
-          onShow={handleShowApprentice}
-          title="LISTA DE APRENDICES"
-          showActions={{ show: true, edit: false, delete: false, add: false }}
-          tooltipText="Ver detalle del aprendiz"
+        <ProtectedTable
+            data={apprentices}
+            columns={columns}
+            module="Aprendices" // Nombre del módulo para verificar permisos
+            onShow={handleShowApprentice}
+            showActions={{ show: true, massiveUpdate: true, edit: false, delete: false, add: false }}
+            tooltipText="Ver detalle del aprendiz"
+            onMassiveUpdate={handleMassiveUpdate}
+            massiveUpdate={{ enabled: true, buttonText: "Actualización Masiva" }}
         />
 
-        {/* Modal de detalle del aprendiz */}
+        {/* Modales protegidos - Modal de detalle del aprendiz */}
+        <ProtectedAction module="Aprendices" privilege="read">
         {selectedApprentice && (
           <>
             <ApprenticeDetailModal
@@ -173,13 +160,16 @@ const Apprentices = () => {
             />
           </>
         )}
+        </ProtectedAction>
 
         {/* Modal de actualización masiva */}
+        <ProtectedAction module="Aprendices" privilege="update">
         <MassiveUpdateModal
           isOpen={showMassiveUpdateModal}
           onClose={handleMassiveUpdateModalClose}
           onComplete={handleMassiveUpdateComplete}
         />
+        </ProtectedAction>
       </div>
     </div>
   )

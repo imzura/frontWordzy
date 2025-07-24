@@ -72,8 +72,9 @@ const findApprenticeRole = async () => {
       throw new Error(`Error al obtener roles: ${response.status}`)
     }
 
-    const roles = await response.json()
-    const apprenticeRole = roles.find((role) => role.name === "Aprendiz" && role.status === true)
+    const resData = await response.json();
+    const roles = resData.data;
+    const apprenticeRole = roles.find((role) => role.name === "Aprendiz" && role.isActive === true)
 
     if (!apprenticeRole) {
       throw new Error("No se encontró el rol 'Aprendiz' activo. Asegúrese de que esté creado en el sistema.")

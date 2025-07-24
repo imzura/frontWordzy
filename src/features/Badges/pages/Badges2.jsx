@@ -4,6 +4,7 @@ import { useState } from "react"
 import { X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import GenericTable from "../../../shared/components/Table"
+import UserMenu from "../../../shared/components/userMenu"
 
 const Badges = () => {
   // Hook de navegación de React Router
@@ -250,12 +251,14 @@ const Badges = () => {
   // Función para renderizar el formulario de insignias (placeholder)
   const renderBadgeForm = () => {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="max-h-screen bg-white">
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
-          <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#1f384c]">Crear Insignia</h1>
-          </div>
-        </header>
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#1f384c]">Insignias</h1>
+          <UserMenu />
+        </div>
+      </header>
+      
         <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
           <p>Formulario de creación de insignias (por implementar)</p>
           <button
@@ -272,13 +275,14 @@ const Badges = () => {
   // Renderizar la vista de lista de insignias
   const renderBadgesList = () => {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="max-h-screen bg-white">
         {/* Header */}
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
-          <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#1f384c]">Insignias</h1>
-          </div>
-        </header>
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#1f384c]">Insignias</h1>
+          <UserMenu />
+        </div>
+      </header>
 
         {/* Main Content */}
         <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">

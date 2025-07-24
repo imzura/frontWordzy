@@ -11,21 +11,25 @@ export const useAuth = () => {
     throw new Error("useAuth debe ser usado dentro de un AuthProvider")
   }
 
-  const { user, login: contextLogin, logout: contextLogout, isAuthenticated } = context
+  const {
+    user,
+    login: contextLogin,
+    logout: contextLogout,
+    isAuthenticated,
+    isAuthResolved,
+  } = context
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const login = async (credentials) => {
     setIsLoading(true)
     setError(null)
-
     try {
       const userData = await loginUser(credentials)
-
       if (!userData.token) {
         throw new Error("Error de autenticación: No se recibió token")
       }
-
       contextLogin(userData)
       return userData
     } catch (err) {
@@ -43,6 +47,7 @@ export const useAuth = () => {
   return {
     user,
     isAuthenticated,
+    isAuthResolved,
     isLoading,
     error,
     login,

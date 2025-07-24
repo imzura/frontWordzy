@@ -1,5 +1,7 @@
 "use client"
 
+import ProtectedAction from "../../../shared/components/ProtectedAction"
+
 const QuickActions = ({ onAction, isTenico = false, programmingLevels = [], maxLevels = 6 }) => {
   const actions = [
     { key: "activar-todos", label: "Activar Todos", color: "bg-green-100 text-green-700 hover:bg-green-200" },
@@ -24,6 +26,7 @@ const QuickActions = ({ onAction, isTenico = false, programmingLevels = [], maxL
   })
 
   return (
+    <ProtectedAction module="Asignación de Niveles" privilege="assign">
     <div className="flex flex-wrap gap-2 mb-6">
       {actions.map((action) => (
         <button
@@ -35,6 +38,7 @@ const QuickActions = ({ onAction, isTenico = false, programmingLevels = [], maxL
         </button>
       ))}
     </div>
+    </ProtectedAction>
   )
 }
 

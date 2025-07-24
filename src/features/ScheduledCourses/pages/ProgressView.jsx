@@ -2,21 +2,20 @@
 
 import { useEffect, useState, useRef } from "react";
 import GenericTable from "../../../shared/components/Table";
-import { ChevronDown, RefreshCw } from "lucide-react";
-import { useAuth } from "../../auth/hooks/useAuth";
+import { RefreshCw } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
-import ConfirmationModal from "../../../shared/components/ConfirmationModal";
 import { useApprenticeProgress } from "../hooks/use-apprentice-progress";
 import { useGetProgrammingByProgramName } from "../hooks/use-get-programming-by-program-name";
 import { formatDate } from "../../../shared/utils/dateFormatter";
 import CustomSelect from "../../CourseProgramming/components/course-programming/ui/custom-select";
+import UserMenu from "../../../shared/components/userMenu";
+import ProtectedTable from "../../../shared/components/ProtectedTable";
 
 const ProgressViewFinal = () => {
   const { nombre } = useParams();
   const navigate = useNavigate();
   const [learnerData, setLearnerData] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [fichaNombre, setFichaNombre] = useState("");
   const [nivelNombre, setNivelNombre] = useState("");
   const [nivelNumber, setNivelNumber] = useState(1);
@@ -28,8 +27,6 @@ const ProgressViewFinal = () => {
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [filteredProgress, setFilteredProgress] = useState([]);
   const [enrichedProgress, setEnrichedProgress] = useState([]);
-
-  const { logout } = useAuth();
   const dropdownRef = useRef(null);
 
   // Hook para obtener progreso del aprendiz
@@ -320,16 +317,6 @@ const ProgressViewFinal = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [navigate, nombre]);
 
-  const handleLogoutClick = () => {
-    setIsDropdownOpen(false);
-    setShowLogoutConfirm(true);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const handleBack = () => {
     navigate("/progreso/cursosProgramados/niveles/aprendices");
   };
@@ -344,34 +331,12 @@ const ProgressViewFinal = () => {
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
           <div className="container mx-auto flex justify-between items-center">
             <h1 className="text-2xl font-bold text-[#1f384c]">
-              Cursos Programados
+              Cursos programados
             </h1>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                <span>Administrador</span>
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                  <button
-                    onClick={handleLogoutClick}
-                    className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                  >
-                    Cerrar Sesión
-                  </button>
-                </div>
-              )}
-            </div>
+            <UserMenu />
           </div>
         </header>
+
         <div className="flex justify-center my-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
           <span className="ml-2">Cargando...</span>
@@ -490,36 +455,13 @@ const ProgressViewFinal = () => {
     typeof selectedTopic === "object" ? selectedTopic.value : selectedTopic;
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">
-            Cursos Programados
+            Cursos programados
           </h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-[#1f384c] font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <span>Administrador</span>
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full text-left px-4 py-2 text-[#f44144] hover:bg-gray-50 rounded-lg"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          <UserMenu />
         </div>
       </header>
 
@@ -675,9 +617,10 @@ const ProgressViewFinal = () => {
                 </button>
               </div>
             ) : (
-              <GenericTable
+              <ProtectedTable
                 data={formattedProgress}
                 columns={progressColumns}
+                module="Cursos Programados" // Nombre del módulo para verificar permisos
                 showActions={{
                   show: true,
                   edit: false,
@@ -694,17 +637,8 @@ const ProgressViewFinal = () => {
                           ?.name || "seleccionado"
                       }`
                 }
-              />
+        />
             )}
-
-            <ConfirmationModal
-              isOpen={showLogoutConfirm}
-              onClose={() => setShowLogoutConfirm(false)}
-              onConfirm={handleLogout}
-              title="Cerrar Sesión"
-              message="¿Está seguro de que desea cerrar la sesión actual?"
-              confirmText="Cerrar Sesión"
-            />
           </div>
         </div>
       </div>

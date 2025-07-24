@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { RefreshCw } from "lucide-react"
-import GenericTable from "../../../shared/components/Table"
 import ProgramDetailModal from "./ProgramDetailModal"
 import MassiveUpdateModal from "../componentes/MassiveUpdateModal"
 
 // Hooks
 import { useGetPrograms } from "../hooks/useGetPrograms"
 import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
+import ProtectedAction from "../../../shared/components/ProtectedAction"
 
 const columns = [
   {
@@ -17,6 +17,7 @@ const columns = [
   render: (item) => (
     <div className="whitespace-normal break-words max-w-xs">{item.name}</div>
   ),
+  width: "30%"
 },
 
   { key: "code", label: "Código" },
@@ -105,7 +106,7 @@ export default function Programs() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="max-h-screen">
       <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#1f384c]">Programas</h1>
@@ -117,37 +118,32 @@ export default function Programs() {
         {/* Mostrar errores si los hay */}
         {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
 
-        {/* Botón de Actualización Masiva */}
-        <div className="mb-6 flex justify-end">
-          <button
-            onClick={handleMassiveUpdate}
-            className="flex items-center gap-2 bg-[#1f384c] text-white px-4 py-2 rounded-lg hover:bg-[#2a4a5e] transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Actualización Masiva
-          </button>
-        </div>
-
-        <GenericTable
-          data={programs}
-          columns={columns}
-          onShow={handleShowProgram}
-          title="LISTA DE PROGRAMAS"
-          showActions={{ show: true, edit: false, delete: false, add: false }}
-          tooltipText="Ver detalle del programa"
+        <ProtectedTable
+            data={programs}
+            columns={columns}
+            module="Programas" // Nombre del módulo para verificar permisos
+            onShow={handleShowProgram}
+            showActions={{ show: true, massiveUpdate: true, edit: false, delete: false, add: false }}
+            tooltipText="Ver detalle del programa"
+            onMassiveUpdate={handleMassiveUpdate}
+            massiveUpdate={{ enabled: true, buttonText: "Actualización Masiva" }}
         />
 
         {/* Modal de detalle del programa */}
+        <ProtectedAction module="Programas" privilege="read">
         {selectedProgram && (
           <ProgramDetailModal program={selectedProgram} isOpen={isDetailModalOpen} onClose={handleCloseDetailModal} />
         )}
-
+        </ProtectedAction>
+        
         {/* Modal de actualización masiva */}
+        <ProtectedAction module="Programas" privilege="update">
         <MassiveUpdateModal
           isOpen={showMassiveUpdateModal}
           onClose={() => setShowMassiveUpdateModal(false)}
           onComplete={handleMassiveUpdateComplete}
         />
+        </ProtectedAction>
       </div>
     </div>
   )
