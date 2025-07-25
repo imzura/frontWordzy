@@ -60,50 +60,93 @@ const CreateInstructorPage = () => {
     correo: { status: "idle", message: "" },
   })
 
+  // Estado para controlar qué campos han sido tocados
+  const [touchedFields, setTouchedFields] = useState({
+    nombre: false,
+    apellido: false,
+    documento: false,
+    telefono: false,
+    correo: false,
+  })
+
   const [searchTerm, setSearchTerm] = useState("")
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   // --- Lógica de Validación ---
 
-  // Validaciones síncronas que se ejecutan con cada cambio en el formulario
+  // Validaciones síncronas que se ejecutan solo para campos tocados
   useEffect(() => {
     const { nombre, apellido, documento, tipoDocumento, telefono, correo } = formData
-    setErrors({
-      nombre: validateNombre(nombre),
-      apellido: validateApellido(apellido),
-      documento: validateDocumento(documento, tipoDocumento),
-      telefono: validateTelefono(telefono),
-      correo: validateCorreo(correo),
-    })
-  }, [formData])
+    const newErrors = {}
+
+    // Solo validar campos que han sido tocados
+    if (touchedFields.nombre) {
+      const nombreError = validateNombre(nombre)
+      if (nombreError) newErrors.nombre = nombreError
+    }
+
+    if (touchedFields.apellido) {
+      const apellidoError = validateApellido(apellido)
+      if (apellidoError) newErrors.apellido = apellidoError
+    }
+
+    if (touchedFields.documento) {
+      const documentoError = validateDocumento(documento, tipoDocumento)
+      if (documentoError) newErrors.documento = documentoError
+    }
+
+    if (touchedFields.telefono) {
+      const telefonoError = validateTelefono(telefono)
+      if (telefonoError) newErrors.telefono = telefonoError
+    }
+
+    if (touchedFields.correo) {
+      const correoError = validateCorreo(correo)
+      if (correoError) newErrors.correo = correoError
+    }
+
+    setErrors(newErrors)
+  }, [formData, touchedFields])
 
   // Callback para la validación de documento
-  const checkDocumentCallback = useCallback(async (doc, docType) => {
-    if (validateDocumento(doc, docType)) {
-      setAsyncValidation((prev) => ({ ...prev, documento: { status: "idle", message: "" } }))
-      return
-    }
-    setAsyncValidation((prev) => ({ ...prev, documento: { status: "checking", message: "" } }))
-    const result = await checkDocumentUniqueness(doc)
-    setAsyncValidation((prev) => ({
-      ...prev,
-      documento: { status: result.unique ? "idle" : "error", message: result.message || "" },
-    }))
-  }, [])
+  const checkDocumentCallback = useCallback(
+    async (doc, docType) => {
+      if (!touchedFields.documento) return
+
+      const validationError = validateDocumento(doc, docType)
+      if (validationError) {
+        setAsyncValidation((prev) => ({ ...prev, documento: { status: "idle", message: "" } }))
+        return
+      }
+      setAsyncValidation((prev) => ({ ...prev, documento: { status: "checking", message: "" } }))
+      const result = await checkDocumentUniqueness(doc)
+      setAsyncValidation((prev) => ({
+        ...prev,
+        documento: { status: result.unique ? "idle" : "error", message: result.message || "" },
+      }))
+    },
+    [touchedFields.documento],
+  )
 
   // Callback para la validación de correo
-  const checkEmailCallback = useCallback(async (email) => {
-    if (validateCorreo(email)) {
-      setAsyncValidation((prev) => ({ ...prev, correo: { status: "idle", message: "" } }))
-      return
-    }
-    setAsyncValidation((prev) => ({ ...prev, correo: { status: "checking", message: "" } }))
-    const result = await checkEmailUniqueness(email)
-    setAsyncValidation((prev) => ({
-      ...prev,
-      correo: { status: result.unique ? "idle" : "error", message: result.message || "" },
-    }))
-  }, [])
+  const checkEmailCallback = useCallback(
+    async (email) => {
+      if (!touchedFields.correo) return
+
+      const validationError = validateCorreo(email)
+      if (validationError) {
+        setAsyncValidation((prev) => ({ ...prev, correo: { status: "idle", message: "" } }))
+        return
+      }
+      setAsyncValidation((prev) => ({ ...prev, correo: { status: "checking", message: "" } }))
+      const result = await checkEmailUniqueness(email)
+      setAsyncValidation((prev) => ({
+        ...prev,
+        correo: { status: result.unique ? "idle" : "error", message: result.message || "" },
+      }))
+    },
+    [touchedFields.correo],
+  )
 
   // Usar el hook de debounce con los callbacks estables
   const debouncedCheckDocument = useDebouncedCallback(checkDocumentCallback, 500)
@@ -111,16 +154,16 @@ const CreateInstructorPage = () => {
 
   // useEffects para disparar las validaciones asíncronas con debounce
   useEffect(() => {
-    if (formData.documento) {
+    if (formData.documento && touchedFields.documento) {
       debouncedCheckDocument(formData.documento, formData.tipoDocumento)
     }
-  }, [formData.documento, formData.tipoDocumento, debouncedCheckDocument])
+  }, [formData.documento, formData.tipoDocumento, debouncedCheckDocument, touchedFields.documento])
 
   useEffect(() => {
-    if (formData.correo) {
+    if (formData.correo && touchedFields.correo) {
       debouncedCheckEmail(formData.correo)
     }
-  }, [formData.correo, debouncedCheckEmail])
+  }, [formData.correo, debouncedCheckEmail, touchedFields.correo])
 
   // --- Fin de la Lógica de Validación ---
 
@@ -135,6 +178,9 @@ const CreateInstructorPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+
+    // Marcar el campo como tocado cuando el usuario comience a escribir
+    setTouchedFields((prev) => ({ ...prev, [name]: true }))
   }
 
   const handleFichaToggle = (fichaId) => {
@@ -148,6 +194,16 @@ const CreateInstructorPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Marcar todos los campos como tocados al enviar
+    setTouchedFields({
+      nombre: true,
+      apellido: true,
+      documento: true,
+      telefono: true,
+      correo: true,
+    })
+
     // Forzar una última validación completa antes de enviar
     const finalValidationErrors = await validateInstructorData(formData, false)
     if (Object.keys(finalValidationErrors).length > 0) {
