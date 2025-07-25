@@ -34,6 +34,7 @@ const InstructorsPage = () => {
   const [selectedInstructor, setSelectedInstructor] = useState(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showFichasAlert, setShowFichasAlert] = useState(false)
   const [instructorToDelete, setInstructorToDelete] = useState(null)
   const navigate = useNavigate()
 
@@ -75,8 +76,18 @@ const InstructorsPage = () => {
       return
     }
 
-    setInstructorToDelete(instructorToDelete)
-    setShowDeleteConfirm(true)
+    // Verificar si el instructor tiene fichas asociadas
+    const hasFichas = instructorToDelete.fichas && instructorToDelete.fichas.length > 0
+
+    if (hasFichas) {
+      console.log("Instructor tiene fichas asociadas:", instructorToDelete.fichas.length)
+      setInstructorToDelete(instructorToDelete)
+      setShowFichasAlert(true)
+    } else {
+      console.log("Instructor no tiene fichas asociadas, procediendo con eliminación")
+      setInstructorToDelete(instructorToDelete)
+      setShowDeleteConfirm(true)
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -104,6 +115,11 @@ const InstructorsPage = () => {
         console.error("Error al eliminar instructor:", error)
       }
     }
+  }
+
+  const handleCloseFichasAlert = () => {
+    setShowFichasAlert(false)
+    setInstructorToDelete(null)
   }
 
   if (loading) {
@@ -134,27 +150,28 @@ const InstructorsPage = () => {
         )}
 
         <ProtectedTable
-            data={instructors}
-            columns={columns}
-            module="Instructores" // Nombre del módulo para verificar permisos
-            onAdd={handleCreateInstructor}
-            onShow={handleShowInstructor}
-            onEdit={handleEditInstructor}
-            onDelete={handleDeleteInstructor}
-            tooltipText="Ver detalle del instructor"
+          data={instructors}
+          columns={columns}
+          module="Instructores" // Nombre del módulo para verificar permisos
+          onAdd={handleCreateInstructor}
+          onShow={handleShowInstructor}
+          onEdit={handleEditInstructor}
+          onDelete={handleDeleteInstructor}
+          tooltipText="Ver detalle del instructor"
         />
 
         <ProtectedAction module="Instructores" privilege="read">
-        {selectedInstructor && (
-          <InstructorDetailModal
-            instructor={selectedInstructor}
-            isOpen={isDetailModalOpen}
-            onClose={handleCloseDetailModal}
-          />
-        )}
+          {selectedInstructor && (
+            <InstructorDetailModal
+              instructor={selectedInstructor}
+              isOpen={isDetailModalOpen}
+              onClose={handleCloseDetailModal}
+            />
+          )}
         </ProtectedAction>
       </div>
 
+      {/* Modal de confirmación para eliminación normal */}
       <ConfirmationModal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
@@ -164,6 +181,20 @@ const InstructorsPage = () => {
         confirmText="Eliminar"
         confirmColor="bg-[#f44144] hover:bg-red-600"
         loading={deleting}
+      />
+
+      {/* Modal de alerta para instructor con fichas asociadas */}
+      <ConfirmationModal
+        isOpen={showFichasAlert}
+        onClose={handleCloseFichasAlert}
+        onConfirm={handleCloseFichasAlert}
+        title="No se puede eliminar el instructor"
+        message={`No se puede eliminar el instructor ${instructorToDelete?.nombre} ${instructorToDelete?.apellido} porque tiene fichas asociadas.`}
+        confirmText="Cerrar"
+        confirmColor="bg-[#f44144] hover:bg-red-600"
+        showCancel={false}
+        showButtonCancel={false}
+        loading={false}
       />
     </div>
   )
