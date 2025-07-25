@@ -1,57 +1,28 @@
 "use client"
 
-import { useState } from "react"
 import { Search, RotateCcw } from "lucide-react"
 import SearchableSelect from "./SearchableSelect"
 
-const FeedbackFilters = ({ fichas, instructors, niveles, onSearch, loading }) => {
-  const [selectedFicha, setSelectedFicha] = useState("")
-  const [selectedNivel, setSelectedNivel] = useState("")
-  const [selectedInstructor, setSelectedInstructor] = useState("")
-
-  // Convertir arrays a formato de opciones para SearchableSelect
-  const fichaOptions = fichas.map((ficha) => ({
-    value: ficha.value,
-    label: ficha.label,
-    programa: ficha.programa,
-  }))
-
-  const instructorOptions = instructors.map((instructor) => ({
-    value: instructor.nombre,
-    label: instructor.nombre,
-    especialidad: instructor.especialidad,
-  }))
-
-  const nivelOptions = niveles.map((nivel) => ({
-    value: nivel,
-    label: nivel,
-  }))
-
+const FeedbackFilters = ({
+  instructors,
+  fichas,
+  niveles,
+  selectedInstructor,
+  selectedFicha,
+  selectedNivel,
+  onInstructorChange,
+  onFichaChange,
+  onNivelChange,
+  onSearch,
+  onReset,
+  loading,
+}) => {
   const handleSearch = () => {
-    const filters = {
-      ficha: selectedFicha,
-      nivel: selectedNivel,
-      instructor: selectedInstructor,
-    }
-
-    // Verificar que al menos un filtro esté seleccionado
-    if (!selectedFicha && !selectedNivel && !selectedInstructor) {
-      alert("Por favor selecciona al menos un filtro para realizar la búsqueda")
-      return
-    }
-
-    console.log("Aplicando filtros:", filters)
-    onSearch(filters)
+    onSearch()
   }
 
-  const handleReset = () => {
-    setSelectedFicha("")
-    setSelectedNivel("")
-    setSelectedInstructor("")
-  }
-
-  const hasActiveFilters = selectedFicha || selectedNivel || selectedInstructor
-  const canSearch = hasActiveFilters && !loading
+  const hasActiveFilters = selectedInstructor || selectedFicha || selectedNivel
+  const canSearch = selectedInstructor && selectedFicha && selectedNivel && !loading
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -59,40 +30,40 @@ const FeedbackFilters = ({ fichas, instructors, niveles, onSearch, loading }) =>
         <h3 className="text-lg font-medium text-[#1f384c]">Filtros de Búsqueda</h3>
         {hasActiveFilters && (
           <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-            {[selectedFicha, selectedNivel, selectedInstructor].filter(Boolean).length} filtro(s) activo(s)
+            {[selectedInstructor, selectedFicha, selectedNivel].filter(Boolean).length} filtro(s) activo(s)
           </span>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        {/* Selector de Instructor */}
+        <SearchableSelect
+          options={instructors}
+          value={selectedInstructor}
+          onChange={onInstructorChange}
+          placeholder="Seleccionar instructor"
+          label="Instructor"
+          disabled={loading}
+        />
+
         {/* Selector de Ficha */}
         <SearchableSelect
-          options={fichaOptions}
+          options={fichas}
           value={selectedFicha}
-          onChange={setSelectedFicha}
+          onChange={onFichaChange}
           placeholder="Seleccionar ficha"
           label="Ficha"
-          disabled={loading}
+          disabled={!selectedInstructor || loading}
         />
 
         {/* Selector de Nivel */}
         <SearchableSelect
-          options={nivelOptions}
+          options={niveles}
           value={selectedNivel}
-          onChange={setSelectedNivel}
+          onChange={onNivelChange}
           placeholder="Seleccionar nivel"
           label="Nivel"
-          disabled={loading}
-        />
-
-        {/* Selector de Instructor */}
-        <SearchableSelect
-          options={instructorOptions}
-          value={selectedInstructor}
-          onChange={setSelectedInstructor}
-          placeholder="Seleccionar instructor"
-          label="Instructor"
-          disabled={loading}
+          disabled={!selectedFicha || loading}
         />
 
         {/* Botones de acción */}
@@ -120,7 +91,7 @@ const FeedbackFilters = ({ fichas, instructors, niveles, onSearch, loading }) =>
           </button>
 
           <button
-            onClick={handleReset}
+            onClick={onReset}
             disabled={loading || !hasActiveFilters}
             className={`px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 ${
               hasActiveFilters && !loading
@@ -139,19 +110,19 @@ const FeedbackFilters = ({ fichas, instructors, niveles, onSearch, loading }) =>
         <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
           <p className="text-sm text-blue-800 font-medium mb-2">Filtros activos:</p>
           <div className="flex flex-wrap gap-2">
+            {selectedInstructor && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Instructor: {instructors.find((i) => i.value === selectedInstructor)?.label}
+              </span>
+            )}
             {selectedFicha && (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Ficha: {fichaOptions.find((f) => f.value === selectedFicha)?.label}
+                Ficha: {fichas.find((f) => f.value === selectedFicha)?.label}
               </span>
             )}
             {selectedNivel && (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 Nivel: {selectedNivel}
-              </span>
-            )}
-            {selectedInstructor && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Instructor: {selectedInstructor}
               </span>
             )}
           </div>

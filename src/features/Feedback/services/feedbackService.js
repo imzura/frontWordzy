@@ -1,4 +1,44 @@
 // Servicio para manejar las operaciones de retroalimentación
+import { API_ENDPOINTS } from "../../../shared/config/api"
+
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    const errorText = await response.text()
+    try {
+      const errorJson = JSON.parse(errorText)
+      throw new Error(errorJson.message || `Error HTTP: ${response.status}`)
+    } catch (e) {
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`)
+    }
+  }
+  return response.json()
+}
+
+const fetchData = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Asumiendo que la API Key se gestiona en un interceptor o contexto superior.
+        // Si no, habría que añadirla aquí.
+      },
+      signal: AbortSignal.timeout(15000), // 15 segundos de timeout
+      ...options,
+    })
+    return await handleResponse(response)
+  } catch (error) {
+    console.error(`🚨 Error en la solicitud a ${url}:`, error.message)
+    if (error.name === "TimeoutError") {
+      throw new Error("La solicitud ha tardado demasiado y ha sido cancelada.")
+    }
+    if (error.message.includes("fetch")) {
+      throw new Error("No se puede conectar con el servidor. Verifique que la API esté en ejecución.")
+    }
+    throw error
+  }
+}
+
 const API_BASE_URL = "http://localhost:3000/api"
 
 // Función para obtener todos los usuarios desde la API
@@ -35,6 +75,42 @@ const getAllUsers = async () => {
     throw error
   }
 }
+
+/**
+ * Obtiene todos los instructores desde la API.
+ * @returns {Promise<Array>} Lista de instructores.
+ */
+export const getInstructors = async () => {
+  console.log("👨‍🏫 Obteniendo instructores...")
+  const data = await fetchData(API_ENDPOINTS.INSTRUCTORS)
+  console.log(`✅ Se encontraron ${data.length} instructores.`)
+  return data
+}
+
+/**
+ * Obtiene todas las programaciones de cursos desde la API.
+ * @returns {Promise<Array>} Lista de programaciones de cursos.
+ */
+export const getCourseProgrammings = async () => {
+  console.log("📚 Obteniendo programaciones de cursos...")
+  const data = await fetchData(API_ENDPOINTS.COURSE_PROGRAMMING)
+  console.log(`✅ Se encontraron ${data.length} programaciones.`)
+  return data
+}
+
+/**
+ * Obtiene todos los aprendices desde la API.
+ * @returns {Promise<Array>} Lista de aprendices.
+ */
+export const getApprentices = async () => {
+  console.log("👨‍🎓 Obteniendo todos los aprendices...")
+  const data = await fetchData(API_ENDPOINTS.APPRENTICES)
+  console.log(`✅ Se encontraron ${data.length} aprendices.`)
+  return data
+}
+
+// === FUNCIONES LEGACY PARA COMPATIBILIDAD ===
+// Estas funciones se mantienen para compatibilidad con código existente
 
 // Función para obtener las fichas desde los usuarios aprendices
 export const getFichasFromAPI = async () => {
@@ -130,45 +206,6 @@ export const getFichasFromAPI = async () => {
     return fichasOrdenadas
   } catch (error) {
     console.error("❌ Error en getFichasFromAPI:", error.message)
-    throw error
-  }
-}
-
-// Función para obtener instructores desde la API
-export const getInstructors = async () => {
-  try {
-    console.log("👨‍🏫 Obteniendo instructores...")
-    const users = await getAllUsers()
-
-    if (!Array.isArray(users)) {
-      throw new Error("Formato de datos inválido")
-    }
-
-    console.log("👥 Total de usuarios para filtrar instructores:", users.length)
-
-    // Filtrar usuarios que sean instructores
-    const instructores = users.filter((user) => {
-      const esInstructor = user && user.tipoUsuario === "instructor"
-      if (esInstructor) {
-        console.log("👩‍🏫 Instructor encontrado:", user.nombre, user.apellido)
-      }
-      return esInstructor
-    })
-
-    console.log("👩‍🏫 Total instructores encontrados:", instructores.length)
-
-    // Crear el formato necesario para los selectores
-    const instructorsData = instructores.map((instructor) => ({
-      nombre: `${instructor.nombre || ""} ${instructor.apellido || ""}`.trim() || "Sin nombre",
-      especialidad: instructor.especialidad || "Inglés General",
-      id: instructor._id || instructor.id,
-    }))
-
-    const instructorsOrdenados = instructorsData.sort((a, b) => a.nombre.localeCompare(b.nombre))
-    console.log("✅ Instructores finales:", instructorsOrdenados)
-    return instructorsOrdenados
-  } catch (error) {
-    console.error("❌ Error en getInstructors:", error.message)
     throw error
   }
 }
