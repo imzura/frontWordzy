@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { FiUpload, FiChevronDown, FiPlus } from "react-icons/fi"
 import { Trash, Pencil } from "lucide-react"
 import ConfirmationModal from "../../../shared/components/ConfirmationModal"
 import { isEvaluationInUse } from "../services/courseProgrammingService"
+import { validateEvaluationName } from "../services/evaluationValidationService"
 
 const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = false }) => {
   const [formData, setFormData] = useState({
@@ -36,8 +37,13 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
   })
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(null)
   const [validationError, setValidationError] = useState("")
-  const [isInUseModalOpen, setIsInUseModalOpen] = useState(false) // Estado para la alerta
+  const [isInUseModalOpen, setIsInUseModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Estados para validaciones
+  const [touchedFields, setTouchedFields] = useState({})
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [isValidatingName, setIsValidatingName] = useState(false)
 
   useEffect(() => {
     if (evaluation) {
@@ -70,12 +76,67 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
     }
   }, [evaluation])
 
+  // Validación del nombre con debounce
+  const validateNameField = useCallback(
+    async (nombre, tipoEvaluacion) => {
+      if (!touchedFields.nombre) return
+
+      setIsValidatingName(true)
+      try {
+        const currentId = evaluation?.id || evaluation?._id
+        const error = await validateEvaluationName(nombre, tipoEvaluacion, currentId)
+
+        setFieldErrors((prev) => ({
+          ...prev,
+          nombre: error,
+        }))
+      } catch (error) {
+        console.error("Error validating name:", error)
+        setFieldErrors((prev) => ({
+          ...prev,
+          nombre: "Error al validar el nombre",
+        }))
+      } finally {
+        setIsValidatingName(false)
+      }
+    },
+    [touchedFields.nombre, evaluation],
+  )
+
+  // Efecto para validar nombre cuando cambie
+  useEffect(() => {
+    if (touchedFields.nombre && formData.nombre && formData.tipoEvaluacion) {
+      const timeoutId = setTimeout(() => {
+        validateNameField(formData.nombre, formData.tipoEvaluacion)
+      }, 500) // Debounce de 500ms
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [formData.nombre, formData.tipoEvaluacion, validateNameField])
+
   const handleChange = (e) => {
     const { name, value } = e.target
+
+    // Marcar el campo como tocado
+    if (!touchedFields[name]) {
+      setTouchedFields((prev) => ({
+        ...prev,
+        [name]: true,
+      }))
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }))
+
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: null,
+      }))
+    }
   }
 
   const handleToggleEstado = async () => {
@@ -370,7 +431,32 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Marcar todos los campos como tocados para mostrar errores
+    setTouchedFields({
+      nombre: true,
+      tematica: true,
+      tipoEvaluacion: true,
+    })
+
+    // Validar nombre antes de enviar
+    if (formData.nombre && formData.tipoEvaluacion) {
+      const currentId = evaluation?.id || evaluation?._id
+      const nameError = await validateEvaluationName(formData.nombre, formData.tipoEvaluacion, currentId)
+      if (nameError) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          nombre: nameError,
+        }))
+        return
+      }
+    }
+
     if (!isPuntajeValid()) {
+      return
+    }
+
+    // Verificar si hay errores de validación
+    if (fieldErrors.nombre) {
       return
     }
 
@@ -461,7 +547,11 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
     }
   }
 
-  const isSaveDisabled = (formData.preguntas.length > 0 && !isPuntajeValid()) || currentQuestionType !== null
+  const isSaveDisabled =
+    (formData.preguntas.length > 0 && !isPuntajeValid()) ||
+    currentQuestionType !== null ||
+    fieldErrors.nombre ||
+    isValidatingName
 
   return (
     <div className="bg-white rounded-lg p-6 w-full max-w-7xl mx-auto">
@@ -475,16 +565,30 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-[14px] font-medium mb-1">Nombre de la Evaluacion</label>
-              <input
-                type="text"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
-                placeholder="Ingrese el nombre de la evaluacion"
-                disabled={isSubmitting}
-                required
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  className={`w-full p-2 border rounded-md text-[14px] ${
+                    touchedFields.nombre && fieldErrors.nombre
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-300 focus:border-blue-500"
+                  }`}
+                  placeholder="Ingrese el nombre de la evaluacion"
+                  disabled={isSubmitting}
+                  required
+                />
+                {isValidatingName && (
+                  <div className="absolute right-2 top-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
+              {touchedFields.nombre && fieldErrors.nombre && (
+                <p className="mt-1 text-red-500 text-[12px]">{fieldErrors.nombre}</p>
+              )}
             </div>
 
             <div>
@@ -1240,7 +1344,11 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     ? "Debe guardar o cancelar la pregunta actual para poder guardar la evaluación."
                     : !isPuntajeValid() && formData.preguntas.length > 0
                       ? "El puntaje total debe ser 100 para poder guardar."
-                      : "Guardar Evaluación"
+                      : fieldErrors.nombre
+                        ? "Debe corregir los errores de validación antes de guardar."
+                        : isValidatingName
+                          ? "Validando nombre..."
+                          : "Guardar Evaluación"
               }
             >
               {isSubmitting ? (
