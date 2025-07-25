@@ -77,11 +77,11 @@ const EditEvaluationPage = () => {
     return (
       <div className="min-h-screen">
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1f384c]">Evaluaciones</h1>
-          <UserMenu />
-        </div>
-      </header>
+          <div className="container mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-[#1f384c]">Evaluaciones</h1>
+            <UserMenu />
+          </div>
+        </header>
 
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
@@ -99,11 +99,11 @@ const EditEvaluationPage = () => {
     return (
       <div className="min-h-screen">
         <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1f384c]">Evaluaciones</h1>
-          <UserMenu />
-        </div>
-      </header>
+          <div className="container mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-[#1f384c]">Evaluaciones</h1>
+            <UserMenu />
+          </div>
+        </header>
 
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
@@ -136,11 +136,31 @@ const EditEvaluationPage = () => {
             </div>
           )}
 
-          {/* Loading Overlay */}
+          {/* Loading Overlay mejorado */}
           {(updateLoading || isSubmitting) && (
-            <div className="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-700 rounded-md flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
-              {isSubmitting ? "Actualizando evaluación..." : "Cargando..."}
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-8 max-w-md mx-4 text-center shadow-2xl">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#46ae69] mx-auto mb-6"></div>
+                <h3 className="text-xl font-bold text-[#1f384c] mb-3">
+                  {isSubmitting ? "Actualizando Evaluación" : "Cargando"}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {isSubmitting
+                    ? "Estamos procesando los cambios y actualizando la evaluación. Este proceso puede tomar unos momentos."
+                    : "Cargando datos de la evaluación..."}
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-[#46ae69] rounded-full animate-bounce"></div>
+                  <div
+                    className="w-2 h-2 bg-[#46ae69] rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-[#46ae69] rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                </div>
+              </div>
             </div>
           )}
 

@@ -111,15 +111,59 @@ export const deleteEvaluation = async (id) => {
 }
 
 /**
- * Normaliza una evaluación para asegurar que tenga un campo 'id'
+ * Valida si una URL es de Cloudinary
+ */
+export const isCloudinaryUrl = (url) => {
+  if (!url || typeof url !== "string") return false
+  return url.includes("res.cloudinary.com") || url.includes("cloudinary.com")
+}
+
+/**
+ * Normaliza URLs de Cloudinary para asegurar que tengan el protocolo correcto
+ */
+export const normalizeCloudinaryUrl = (url) => {
+  if (!url) return null
+
+  if (isCloudinaryUrl(url)) {
+    // Si la URL no tiene protocolo, agregar https
+    if (url.startsWith("//")) {
+      return `https:${url}`
+    }
+    // Si no tiene protocolo completo, agregarlo
+    if (!url.startsWith("http")) {
+      return `https://${url}`
+    }
+  }
+
+  return url
+}
+
+/**
+ * Normaliza una evaluación para asegurar que tenga un campo 'id' y URLs correctas
  */
 export const normalizeEvaluation = (evaluation) => {
   if (!evaluation) return null
 
-  return {
+  const normalized = {
     ...evaluation,
     id: evaluation.id || evaluation._id,
   }
+
+  // Normalizar URL del material
+  if (normalized.material) {
+    normalized.material = normalizeCloudinaryUrl(normalized.material)
+  }
+
+  // Normalizar URLs de preguntas
+  if (normalized.preguntas && Array.isArray(normalized.preguntas)) {
+    normalized.preguntas = normalized.preguntas.map((pregunta) => ({
+      ...pregunta,
+      imagen: pregunta.imagen ? normalizeCloudinaryUrl(pregunta.imagen) : null,
+      audio: pregunta.audio ? normalizeCloudinaryUrl(pregunta.audio) : null,
+    }))
+  }
+
+  return normalized
 }
 
 /**

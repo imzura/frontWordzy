@@ -54,11 +54,31 @@ const CreateEvaluationPage = () => {
             <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">Error: {error}</div>
           )}
 
-          {/* Loading Overlay */}
+          {/* Loading Overlay mejorado */}
           {(loading || isSubmitting) && (
-            <div className="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-700 rounded-md flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
-              {isSubmitting ? "Creando evaluación..." : "Cargando..."}
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-8 max-w-md mx-4 text-center shadow-2xl">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#46ae69] mx-auto mb-6"></div>
+                <h3 className="text-xl font-bold text-[#1f384c] mb-3">
+                  {isSubmitting ? "Creando Evaluación" : "Cargando"}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {isSubmitting
+                    ? "Estamos procesando los archivos y guardando la evaluación. Este proceso puede tomar unos momentos."
+                    : "Preparando el formulario..."}
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-[#46ae69] rounded-full animate-bounce"></div>
+                  <div
+                    className="w-2 h-2 bg-[#46ae69] rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-[#46ae69] rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                </div>
+              </div>
             </div>
           )}
 

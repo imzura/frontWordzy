@@ -37,6 +37,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(null)
   const [validationError, setValidationError] = useState("")
   const [isInUseModalOpen, setIsInUseModalOpen] = useState(false) // Estado para la alerta
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (evaluation) {
@@ -102,6 +103,26 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Validar tipo de archivo para materiales
+      const allowedMaterialTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+      ]
+
+      if (!allowedMaterialTypes.includes(file.type)) {
+        setValidationError(
+          "Tipo de archivo no permitido para material. Solo se permiten: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT",
+        )
+        return
+      }
+
+      setValidationError("")
       setFormData((prev) => ({
         ...prev,
         material: file,
@@ -113,6 +134,15 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
   const handleQuestionFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Validar tipo de archivo para imágenes
+      const allowedImageTypes = ["image/jpeg", "image/jpg", "image/png"]
+
+      if (!allowedImageTypes.includes(file.type)) {
+        setValidationError("Tipo de imagen no permitido. Solo se permiten: JPG, JPEG, PNG")
+        return
+      }
+
+      setValidationError("")
       setQuestionData((prev) => ({
         ...prev,
         imagen: file,
@@ -124,6 +154,15 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
   const handleQuestionAudioChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Validar tipo de archivo para audios
+      const allowedAudioTypes = ["audio/mpeg", "audio/mp3"]
+
+      if (!allowedAudioTypes.includes(file.type)) {
+        setValidationError("Tipo de audio no permitido. Solo se permiten archivos MP3")
+        return
+      }
+
+      setValidationError("")
       setQuestionData((prev) => ({
         ...prev,
         audio: file,
@@ -328,60 +367,71 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!isPuntajeValid()) {
       return
     }
 
-    const data = new FormData()
+    setIsSubmitting(true)
+    setValidationError("")
 
-    data.append("nombre", formData.nombre)
-    data.append("tematica", formData.tematica)
-    data.append("tipoEvaluacion", formData.tipoEvaluacion)
-    data.append("estado", formData.estado)
-    data.append("descripcion", formData.descripcion || "")
+    try {
+      const data = new FormData()
 
-    if (evaluation && evaluation.id) {
-      data.append("id", evaluation.id)
-    }
+      data.append("nombre", formData.nombre)
+      data.append("tematica", formData.tematica)
+      data.append("tipoEvaluacion", formData.tipoEvaluacion)
+      data.append("estado", formData.estado)
+      data.append("descripcion", formData.descripcion || "")
 
-    if (formData.material instanceof File) {
-      data.append("material", formData.material)
-    } else if (formData.material && typeof formData.material === "string" && evaluation) {
-      data.append("materialUrl", formData.material)
-    }
-
-    const preguntasModificadas = JSON.parse(JSON.stringify(formData.preguntas))
-
-    formData.preguntas.forEach((pregunta, index) => {
-      delete preguntasModificadas[index].imagenName
-      delete preguntasModificadas[index].audioName
-
-      if (pregunta.tipo === "imagen") {
-        if (pregunta.imagen instanceof File) {
-          const fileKey = `imagen_pregunta_${index}`
-          data.append(fileKey, pregunta.imagen)
-          preguntasModificadas[index].imagen = fileKey
-        } else if (typeof pregunta.imagen === "string" && pregunta.imagen) {
-          preguntasModificadas[index].imagen = pregunta.imagen
-        }
+      if (evaluation && evaluation.id) {
+        data.append("id", evaluation.id)
       }
 
-      if (pregunta.tipo === "audio") {
-        if (pregunta.audio instanceof File) {
-          const fileKey = `audio_pregunta_${index}`
-          data.append(fileKey, pregunta.audio)
-          preguntasModificadas[index].audio = fileKey
-        } else if (typeof pregunta.audio === "string" && pregunta.audio) {
-          preguntasModificadas[index].audio = pregunta.audio
-        }
+      if (formData.material instanceof File) {
+        data.append("material", formData.material)
+      } else if (formData.material && typeof formData.material === "string" && evaluation) {
+        data.append("materialUrl", formData.material)
       }
-    })
 
-    data.append("preguntas", JSON.stringify(preguntasModificadas))
-    onSubmit(data)
+      const preguntasModificadas = JSON.parse(JSON.stringify(formData.preguntas))
+
+      formData.preguntas.forEach((pregunta, index) => {
+        delete preguntasModificadas[index].imagenName
+        delete preguntasModificadas[index].audioName
+
+        if (pregunta.tipo === "imagen") {
+          if (pregunta.imagen instanceof File) {
+            const fileKey = `imagen_pregunta_${index}`
+            data.append(fileKey, pregunta.imagen)
+            preguntasModificadas[index].imagen = fileKey
+          } else if (typeof pregunta.imagen === "string" && pregunta.imagen) {
+            preguntasModificadas[index].imagen = pregunta.imagen
+          }
+        }
+
+        if (pregunta.tipo === "audio") {
+          if (pregunta.audio instanceof File) {
+            const fileKey = `audio_pregunta_${index}`
+            data.append(fileKey, pregunta.audio)
+            preguntasModificadas[index].audio = fileKey
+          } else if (typeof pregunta.audio === "string" && pregunta.audio) {
+            preguntasModificadas[index].audio = pregunta.audio
+          }
+        }
+      })
+
+      data.append("preguntas", JSON.stringify(preguntasModificadas))
+
+      await onSubmit(data)
+    } catch (error) {
+      console.error("Error en handleSubmit:", error)
+      setValidationError("Error al procesar la evaluación. Por favor, inténtelo de nuevo.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleCompletarTextoChange = (e) => {
@@ -432,6 +482,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                 placeholder="Ingrese el nombre de la evaluacion"
+                disabled={isSubmitting}
                 required
               />
             </div>
@@ -444,6 +495,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                 required
+                disabled={isSubmitting}
               >
                 <option value="" disabled>
                   Seleccione una temática
@@ -466,6 +518,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                 required
+                disabled={isSubmitting}
               >
                 <option value="Examen">Examen</option>
                 <option value="Actividad">Actividad</option>
@@ -475,7 +528,14 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
             <div>
               <label className="block text-[14px] font-medium mb-1">Material</label>
               <div className="flex items-center">
-                <input type="file" id="material" onChange={handleFileChange} className="hidden" />
+                <input
+                  type="file"
+                  id="material"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+                  disabled={isSubmitting}
+                />
                 <div className="flex-1 border border-gray-300 rounded-l-md p-2 text-[14px] bg-white text-gray-500 truncate">
                   {formData.material instanceof File
                     ? formData.material.name
@@ -506,6 +566,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                       formData.estado === "Activo" ? "bg-green-600" : "bg-gray-200"
                     }`}
+                    disabled={isSubmitting}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -529,6 +590,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md text-[14px] min-h-[80px]"
               placeholder="Escriba una descripción general sobre esta actividad..."
+              disabled={isSubmitting}
             />
           </div>
 
@@ -567,6 +629,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                             type="button"
                             onClick={() => handleEditQuestion(index)}
                             className="text-blue-500 hover:text-blue-700"
+                            disabled={isSubmitting}
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
@@ -580,6 +643,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                               }))
                             }}
                             className="text-red-500 hover:text-red-700"
+                            disabled={isSubmitting}
                           >
                             <Trash className="h-4 w-4" />
                           </button>
@@ -595,6 +659,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                   type="button"
                   onClick={() => setShowQuestionTypes(!showQuestionTypes)}
                   className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-[14px]"
+                  disabled={isSubmitting}
                 >
                   Agregar nueva pregunta
                   <FiChevronDown className="ml-2" />
@@ -606,6 +671,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         type="button"
                         onClick={() => selectQuestionType("seleccion")}
                         className="block w-full text-left px-3 py-2 text-[14px] hover:bg-[#e8def8] rounded-md"
+                        disabled={isSubmitting}
                       >
                         Selección múltiple única respuesta
                       </button>
@@ -613,6 +679,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         type="button"
                         onClick={() => selectQuestionType("verdaderoFalso")}
                         className="block w-full text-left px-3 py-2 text-[14px] hover:bg-[#e8def8] rounded-md"
+                        disabled={isSubmitting}
                       >
                         Verdadero o falso
                       </button>
@@ -620,6 +687,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         type="button"
                         onClick={() => selectQuestionType("imagen")}
                         className="block w-full text-left px-3 py-2 text-[14px] hover:bg-[#e8def8] rounded-md"
+                        disabled={isSubmitting}
                       >
                         Imagen con preguntas
                       </button>
@@ -627,6 +695,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         type="button"
                         onClick={() => selectQuestionType("audio")}
                         className="block w-full text-left px-3 py-2 text-[14px] hover:bg-[#e8def8] rounded-md"
+                        disabled={isSubmitting}
                       >
                         Audio con pregunta
                       </button>
@@ -634,6 +703,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         type="button"
                         onClick={() => selectQuestionType("completar")}
                         className="block w-full text-left px-3 py-2 text-[14px] hover:bg-[#e8def8] rounded-md"
+                        disabled={isSubmitting}
                       >
                         Completar espacios
                       </button>
@@ -658,6 +728,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           onChange={handleQuestionChange}
                           className="w-16 p-1 border border-gray-300 rounded-md text-[14px]"
                           min="1"
+                          disabled={isSubmitting}
                         />
                       </div>
                       {currentQuestionType && (
@@ -666,7 +737,12 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         </div>
                       )}
                     </div>
-                    <button type="button" onClick={() => setCurrentQuestionType(null)} className="ml-2 text-red-500">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentQuestionType(null)}
+                      className="ml-2 text-red-500"
+                      disabled={isSubmitting}
+                    >
                       <Trash className="h-4 w-6 text-red-500" />
                     </button>
                   </div>
@@ -677,9 +753,10 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     <input
                       type="file"
                       id="imagen"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png"
                       onChange={handleQuestionFileChange}
                       className="hidden"
+                      disabled={isSubmitting}
                     />
                     <div className="flex-1 border border-gray-300 rounded-l-md p-2 text-[14px] bg-white text-gray-500 truncate">
                       {questionData.imagen instanceof File
@@ -704,6 +781,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                     placeholder="Ingrese la pregunta relacionada con la imagen"
                     required
+                    disabled={isSubmitting}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -715,6 +793,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           checked={questionData.respuestaCorrecta === index}
                           onChange={() => setQuestionData((prev) => ({ ...prev, respuestaCorrecta: index }))}
                           className="mr-2"
+                          disabled={isSubmitting}
                         />
                         <input
                           type="text"
@@ -723,6 +802,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                           placeholder={`Opción ${index + 1}`}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                     ))}
@@ -732,6 +812,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     type="button"
                     onClick={addQuestion}
                     className="w-full py-2 bg-[#46ae69] text-white rounded-md hover:bg-green-600 transition-colors text-[14px]"
+                    disabled={isSubmitting}
                   >
                     {editingQuestionIndex !== null ? "Actualizar Pregunta" : "Agregar Pregunta"}
                   </button>
@@ -756,6 +837,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           onChange={handleQuestionChange}
                           className="w-16 p-1 border border-gray-300 rounded-md text-[14px]"
                           min="1"
+                          disabled={isSubmitting}
                         />
                       </div>
                       {currentQuestionType && (
@@ -764,7 +846,12 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         </div>
                       )}
                     </div>
-                    <button type="button" onClick={() => setCurrentQuestionType(null)} className="ml-2 text-red-500">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentQuestionType(null)}
+                      className="ml-2 text-red-500"
+                      disabled={isSubmitting}
+                    >
                       <Trash className="h-4 w-6 text-red-500" />
                     </button>
                   </div>
@@ -778,6 +865,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                     placeholder="Escriba la pregunta aquí"
                     required
+                    disabled={isSubmitting}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -789,6 +877,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           checked={questionData.respuestaCorrecta === index}
                           onChange={() => setQuestionData((prev) => ({ ...prev, respuestaCorrecta: index }))}
                           className="mr-2"
+                          disabled={isSubmitting}
                         />
                         <input
                           type="text"
@@ -797,6 +886,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                           placeholder={`Opción ${index + 1}`}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                     ))}
@@ -806,6 +896,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     type="button"
                     onClick={addQuestion}
                     className="w-full py-2 bg-[#46ae69] text-white rounded-md hover:bg-green-600 transition-colors text-[14px]"
+                    disabled={isSubmitting}
                   >
                     {editingQuestionIndex !== null ? "Actualizar Pregunta" : "Agregar Pregunta"}
                   </button>
@@ -830,6 +921,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           onChange={handleQuestionChange}
                           className="w-16 p-1 border border-gray-300 rounded-md text-[14px]"
                           min="1"
+                          disabled={isSubmitting}
                         />
                       </div>
                       {currentQuestionType && (
@@ -838,7 +930,12 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         </div>
                       )}
                     </div>
-                    <button type="button" onClick={() => setCurrentQuestionType(null)} className="ml-2 text-red-500">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentQuestionType(null)}
+                      className="ml-2 text-red-500"
+                      disabled={isSubmitting}
+                    >
                       <Trash className="h-4 w-6 text-red-500" />
                     </button>
                   </div>
@@ -852,6 +949,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                     placeholder="Escriba la pregunta aquí"
                     required
+                    disabled={isSubmitting}
                   />
 
                   <div className="flex items-center">
@@ -861,6 +959,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                       checked={questionData.respuestaCorrecta === 0}
                       onChange={() => setQuestionData((prev) => ({ ...prev, respuestaCorrecta: 0 }))}
                       className="mr-2"
+                      disabled={isSubmitting}
                     />
                     <span className="text-[14px]">Verdadero</span>
                   </div>
@@ -872,6 +971,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                       checked={questionData.respuestaCorrecta === 1}
                       onChange={() => setQuestionData((prev) => ({ ...prev, respuestaCorrecta: 1 }))}
                       className="mr-2"
+                      disabled={isSubmitting}
                     />
                     <span className="text-[14px]">Falso</span>
                   </div>
@@ -880,6 +980,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     type="button"
                     onClick={addQuestion}
                     className="w-full py-2 bg-[#46ae69] text-white rounded-md hover:bg-green-600 transition-colors text-[14px]"
+                    disabled={isSubmitting}
                   >
                     {editingQuestionIndex !== null ? "Actualizar Pregunta" : "Agregar Pregunta"}
                   </button>
@@ -904,6 +1005,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           onChange={handleQuestionChange}
                           className="w-16 p-1 border border-gray-300 rounded-md text-[14px]"
                           min="1"
+                          disabled={isSubmitting}
                         />
                       </div>
                       {currentQuestionType && (
@@ -912,7 +1014,12 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         </div>
                       )}
                     </div>
-                    <button type="button" onClick={() => setCurrentQuestionType(null)} className="ml-2 text-red-500">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentQuestionType(null)}
+                      className="ml-2 text-red-500"
+                      disabled={isSubmitting}
+                    >
                       <Trash className="h-4 w-6 text-red-500" />
                     </button>
                   </div>
@@ -923,9 +1030,10 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     <input
                       type="file"
                       id="audio"
-                      accept="audio/*"
+                      accept="audio/mpeg,audio/mp3"
                       onChange={handleQuestionAudioChange}
                       className="hidden"
+                      disabled={isSubmitting}
                     />
                     <div className="flex-1 border border-gray-300 rounded-l-md p-2 text-[14px] bg-white text-gray-500 truncate">
                       {questionData.audio instanceof File
@@ -950,6 +1058,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                     placeholder="Ingrese la pregunta relacionada con el audio"
                     required
+                    disabled={isSubmitting}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -961,6 +1070,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           checked={questionData.respuestaCorrecta === index}
                           onChange={() => setQuestionData((prev) => ({ ...prev, respuestaCorrecta: index }))}
                           className="mr-2"
+                          disabled={isSubmitting}
                         />
                         <input
                           type="text"
@@ -969,6 +1079,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                           placeholder={`Opción ${index + 1}`}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                     ))}
@@ -978,6 +1089,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     type="button"
                     onClick={addQuestion}
                     className="w-full py-2 bg-[#46ae69] text-white rounded-md hover:bg-green-600 transition-colors text-[14px]"
+                    disabled={isSubmitting}
                   >
                     {editingQuestionIndex !== null ? "Actualizar Pregunta" : "Agregar Pregunta"}
                   </button>
@@ -1002,6 +1114,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           onChange={handleQuestionChange}
                           className="w-16 p-1 border border-gray-300 rounded-md text-[14px]"
                           min="1"
+                          disabled={isSubmitting}
                         />
                       </div>
                       {currentQuestionType && (
@@ -1010,7 +1123,12 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         </div>
                       )}
                     </div>
-                    <button type="button" onClick={() => setCurrentQuestionType(null)} className="ml-2 text-red-500">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentQuestionType(null)}
+                      className="ml-2 text-red-500"
+                      disabled={isSubmitting}
+                    >
                       <Trash className="h-4 w-6 text-red-500" />
                     </button>
                   </div>
@@ -1028,6 +1146,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                       className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                       placeholder="Escribe el texto con espacios para completar usando []"
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -1043,6 +1162,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                             className="w-full p-2 border border-gray-300 rounded-md text-[14px]"
                             placeholder={`Palabra ${index + 1}`}
                             required
+                            disabled={isSubmitting}
                           />
                         </div>
                       ))}
@@ -1056,6 +1176,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                         type="button"
                         onClick={addOpcionRelleno}
                         className="flex items-center text-[14px] text-blue-600 hover:text-blue-800"
+                        disabled={isSubmitting}
                       >
                         <FiPlus className="mr-1" /> Agregar opción
                       </button>
@@ -1068,12 +1189,13 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                           onChange={(e) => handleOpcionRellenoChange(index, e.target.value)}
                           className="flex-1 p-2 border border-gray-300 rounded-md text-[14px]"
                           placeholder={`Opción de relleno ${index + 1}`}
+                          disabled={isSubmitting}
                         />
                         <button
                           type="button"
                           onClick={() => removeOpcionRelleno(index)}
                           className="ml-2 p-1 text-red-500 hover:text-red-700"
-                          disabled={questionData.opcionesRelleno.length <= 1}
+                          disabled={questionData.opcionesRelleno.length <= 1 || isSubmitting}
                         >
                           <Trash className="h-4 w-6 text-red-500" />
                         </button>
@@ -1085,6 +1207,7 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
                     type="button"
                     onClick={addQuestion}
                     className="w-full py-2 bg-[#46ae69] text-white rounded-md hover:bg-green-600 transition-colors text-[14px]"
+                    disabled={isSubmitting}
                   >
                     {editingQuestionIndex !== null ? "Actualizar Pregunta" : "Agregar Pregunta"}
                   </button>
@@ -1100,24 +1223,36 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
               type="button"
               onClick={onCancel}
               className="px-8 py-2 bg-[#f44144] text-white rounded-md text-[14px] hover:bg-red-600 transition-colors"
+              disabled={isSubmitting}
             >
               Cancelar
             </button>
             <button
               type="submit"
               className={`px-8 py-2 ${
-                isSaveDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-[#46ae69] hover:bg-green-600"
-              } text-white rounded-md text-[14px] transition-colors`}
-              disabled={isSaveDisabled}
+                isSaveDisabled || isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-[#46ae69] hover:bg-green-600"
+              } text-white rounded-md text-[14px] transition-colors flex items-center justify-center`}
+              disabled={isSaveDisabled || isSubmitting}
               title={
-                currentQuestionType !== null
-                  ? "Debe guardar o cancelar la pregunta actual para poder guardar la evaluación."
-                  : !isPuntajeValid() && formData.preguntas.length > 0
-                    ? "El puntaje total debe ser 100 para poder guardar."
-                    : "Guardar Evaluación"
+                isSubmitting
+                  ? "Procesando evaluación..."
+                  : currentQuestionType !== null
+                    ? "Debe guardar o cancelar la pregunta actual para poder guardar la evaluación."
+                    : !isPuntajeValid() && formData.preguntas.length > 0
+                      ? "El puntaje total debe ser 100 para poder guardar."
+                      : "Guardar Evaluación"
               }
             >
-              {evaluation ? "Guardar Cambios" : "Guardar"}
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {evaluation ? "Guardando..." : "Creando..."}
+                </>
+              ) : evaluation ? (
+                "Guardar Cambios"
+              ) : (
+                "Guardar"
+              )}
             </button>
           </div>
         </div>
@@ -1133,6 +1268,21 @@ const EvaluationForm = ({ evaluation = null, onSubmit, onCancel, isCreating = fa
         confirmColor="bg-[#f44144] hover:bg-red-600"
         showButtonCancel={false}
       />
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-sm mx-4 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#46ae69] mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-[#1f384c] mb-2">
+              {evaluation && evaluation.id ? "Actualizando evaluación..." : "Creando evaluación..."}
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Por favor espere mientras procesamos los archivos y guardamos la información.
+            </p>
+            <div className="mt-4 text-xs text-gray-500">Este proceso puede tomar unos momentos</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
