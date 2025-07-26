@@ -15,7 +15,7 @@ const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
   };
 
   const handleBackClick = () => {
-    navigate("/programacion/programacionCursos");
+    navigate("/formacion/instructores");
   };
 
   return (
@@ -200,7 +200,7 @@ const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
         {/* Botón fijo al fondo del modal */}
         <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-center">
           <button
-            onClick={handleBackClick}
+            onClick={onClose}
             className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm transition-colors"
           >
             Cerrar
