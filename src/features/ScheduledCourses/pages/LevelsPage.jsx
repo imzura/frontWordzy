@@ -9,14 +9,13 @@ import UserMenu from "../../../shared/components/userMenu";
 import ProtectedTable from "../../../shared/components/ProtectedTable";
 
 const columns = [
-  { key: "name", label: "Nivel", width: "15%" },
-  { key: "cantidadAprendices", label: "N° Aprendices", width: "15%" },
-  { key: "evaluacionesProgramadas", label: "Evaluaciones", width: "15%" },
-  { key: "topicsProgramados", label: "Temas", width: "15%" },
+  { key: "name", label: "Nivel" },
+  { key: "evaluacionesProgramadas", label: "Evaluaciones" },
+  { key: "topicsProgramados", label: "Temas" },
   {
     key: "progreso",
     label: "Progreso General",
-    width: "25%",
+    width: "20%",
     render: (item) => (
       <div className="flex items-center gap-2 w-full">
         <div className="flex-1 min-w-[100px]">
@@ -271,13 +270,13 @@ const LevelsPageUpdated = () => {
 
         {/* Estado de carga y errores */}
         {(programmingError || apprenticesError) && (
-          <div className="mb-4 p-4 bg-red-50 rounded-lg">
-            <h4 className="font-semibold text-red-800">❌ ¡ERROR!</h4>
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-800">ℹ️ Información</h4>
             {programmingError && (
-              <p className="text-red-600">{programmingError}</p>
+              <p className="text-blue-700">{programmingError}</p>
             )}
             {apprenticesError && (
-              <p className="text-red-600">{apprenticesError}</p>
+              <p className="text-blue-700">{apprenticesError}</p>
             )}
           </div>
         )}

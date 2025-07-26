@@ -448,7 +448,7 @@ const EditInstructorPage = () => {
                     Actualizando...
                   </div>
                 ) : (
-                  "Actualizar Instructor"
+                  "Guardar Cambios"
                 )}
               </button>
             </div>

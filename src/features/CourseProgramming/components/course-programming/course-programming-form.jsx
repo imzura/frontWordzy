@@ -34,7 +34,7 @@ export default function CourseProgrammingForm() {
     return `${year}-${month}-${day}`
   })
   const [endDate, setEndDate] = useState("")
-  const [isFormDirty, setIsFormDirty] = useState(false)
+  // REMOVIDO: const [isFormDirty, setIsFormDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
@@ -42,23 +42,25 @@ export default function CourseProgrammingForm() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [validationErrors, setValidationErrors] = useState([])
   const [showValidationModal, setShowValidationModal] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+
+  // NUEVO ESTADO: Para almacenar los datos originales de la programación
+  const [originalProgrammingData, setOriginalProgrammingData] = useState(null)
 
   // Cargar datos de programación existente para edición
   useEffect(() => {
     if (id && programming) {
       setIsEditMode(true)
 
-      setSelectedProgram({
+      const initialSelectedProgram = {
         value: programming.programId._id,
         label: programming.programId.name,
-        fk_level: programming.programId.fk_level, // ✅ Cargar fk_level para el modo edición
-      })
+        fk_level: programming.programId.fk_level,
+      }
+      setSelectedProgram(initialSelectedProgram)
 
-      // ✅ Formatear fechas correctamente desde la base de datos
       const formatDateFromDB = (dateString) => {
         if (!dateString) return ""
-
-        // Crear fecha desde el string de la BD y extraer solo la parte de fecha
         const date = new Date(dateString)
         const year = date.getUTCFullYear()
         const month = String(date.getUTCMonth() + 1).padStart(2, "0")
@@ -66,11 +68,13 @@ export default function CourseProgrammingForm() {
         return `${year}-${month}-${day}`
       }
 
-      setStartDate(formatDateFromDB(programming.startDate))
-      setEndDate(formatDateFromDB(programming.endDate))
-      setActiveStatus(programming.status)
+      const initialStartDate = formatDateFromDB(programming.startDate)
+      setStartDate(initialStartDate)
+      const initialEndDate = formatDateFromDB(programming.endDate)
+      setEndDate(initialEndDate)
+      const initialActiveStatus = programming.status
+      setActiveStatus(initialActiveStatus)
 
-      // ✅ CORREGIDO: Transformación mejorada para modo edición
       const transformedLevels = (programming.levels || []).map((level) => ({
         _id: level._id,
         id: level._id,
@@ -79,14 +83,12 @@ export default function CourseProgrammingForm() {
         themes: (level.topics || []).map((topic) => {
           let selectedOption = null
           if (topic.topicId) {
-            // ✅ IMPORTANTE: Usar el ID correcto del topic
             const topicId = typeof topic.topicId === "object" ? topic.topicId._id : topic.topicId
             selectedOption = {
               value: topicId,
               label: topic.name,
             }
           }
-
           return {
             _id: topic._id,
             id: topic._id,
@@ -122,11 +124,109 @@ export default function CourseProgrammingForm() {
           }
         }),
       }))
-
-      console.log("🔄 Datos transformados para edición:", transformedLevels)
       setLevels(transformedLevels)
+
+      // Establecer los datos originales después de que todos los estados se hayan inicializado
+      setOriginalProgrammingData({
+        selectedProgram: initialSelectedProgram,
+        startDate: initialStartDate,
+        endDate: initialEndDate,
+        activeStatus: initialActiveStatus,
+        levels: transformedLevels,
+      })
+    } else if (!id) {
+      // Para nueva programación, asegurar que los datos originales sean nulos
+      // y que el formulario no esté sucio inicialmente
+      setOriginalProgrammingData(null)
     }
   }, [id, programming])
+
+  // NUEVO: isFormDirty ahora es un valor derivado
+  const isFormDirty = useMemo(() => {
+    // Caso 1: Nueva Programación (no en modo edición)
+    if (!isEditMode) {
+      const initialStartDateDefault = (() => {
+        const today = new Date()
+        const year = today.getFullYear()
+        const month = String(today.getMonth() + 1).padStart(2, "0")
+        const day = String(today.getDate()).padStart(2, "0")
+        return `${year}-${month}-${day}`
+      })()
+
+      // Comprobar si algún campo ha cambiado de su valor inicial por defecto
+      return (
+        selectedProgram !== "" ||
+        startDate !== initialStartDateDefault ||
+        endDate !== "" ||
+        activeStatus !== true ||
+        levels.length > 0
+      )
+    }
+
+    // Caso 2: Modo Edición
+    if (!originalProgrammingData) {
+      // Esto no debería ocurrir si los datos se cargan correctamente en modo edición
+      // Pero como fallback, asumir que no está sucio si los datos originales aún no están establecidos
+      return false
+    }
+
+    // Función de comparación profunda para niveles y temas
+    const areLevelsEqual = (levels1, levels2) => {
+      if (levels1.length !== levels2.length) return false
+      for (let i = 0; i < levels1.length; i++) {
+        const level1 = levels1[i]
+        const level2 = levels2[i]
+
+        // Comparar propiedades simples del nivel
+        if (level1.name !== level2.name) return false
+
+        // Comparar temas
+        if (level1.themes.length !== level2.themes.length) return false
+        for (let j = 0; j < level1.themes.length; j++) {
+          const theme1 = level1.themes[j]
+          const theme2 = level2.themes[j]
+
+          // Comparar el valor del tema seleccionado (asumiendo {value, label})
+          if ((theme1.selectedTheme?.value || null) !== (theme2.selectedTheme?.value || null)) return false
+          if (theme1.progress !== theme2.progress) return false
+
+          // Comparar actividades, exámenes y materiales dentro de los temas
+          // Una comparación simple con JSON.stringify puede funcionar para arrays de objetos simples
+          // pero podría ser frágil si el orden cambia o si hay funciones/valores indefinidos.
+          // Para esta estructura específica, debería estar bien.
+          const activities1 = theme1.activities || []
+          const activities2 = theme2.activities || []
+          if (activities1.length !== activities2.length) return false
+          for (let k = 0; k < activities1.length; k++) {
+            const act1 = activities1[k]
+            const act2 = activities2[k]
+            // Comparar propiedades relevantes para actividades/exámenes/materiales
+            if (
+              act1.id !== act2.id ||
+              act1.name !== act2.name ||
+              act1.value !== act2.value ||
+              act1.type !== act2.type ||
+              (act1.evaluationId?._id || act1.evaluationId) !== (act2.evaluationId?._id || act2.evaluationId)
+            ) {
+              return false
+            }
+          }
+        }
+      }
+      return true
+    }
+
+    const currentProgramValue = selectedProgram?.value || null
+    const originalProgramValue = originalProgrammingData.selectedProgram?.value || null
+
+    return (
+      currentProgramValue !== originalProgramValue ||
+      startDate !== originalProgrammingData.startDate ||
+      endDate !== originalProgrammingData.endDate ||
+      activeStatus !== originalProgrammingData.activeStatus ||
+      !areLevelsEqual(levels, originalProgrammingData.levels)
+    )
+  }, [isEditMode, selectedProgram, startDate, endDate, activeStatus, levels, originalProgrammingData])
 
   const getTopicNameById = (topicId) => {
     if (!topics || !topicId) return "Sin nombre"
@@ -145,22 +245,16 @@ export default function CourseProgrammingForm() {
     return null
   }
 
-  // ✅ NUEVO: Determinar el máximo de niveles basado en el tipo de programa
   const maxLevels = useMemo(() => {
     if (selectedProgram && typeof selectedProgram === "object" && selectedProgram.fk_level) {
       return selectedProgram.fk_level === "TECNICO" ? 3 : 6
     }
-    // Valor por defecto si no hay programa seleccionado o tipo desconocido
     return 6
   }, [selectedProgram])
 
   const transformDataForBackend = () => {
-    // ✅ Nueva función para manejar fechas correctamente
     const formatDateForBackend = (dateString) => {
       if (!dateString) return null
-
-      // Parsear la fecha como YYYY-MM-DD y crear una fecha en UTC a las 12:00 PM
-      // Esto evita problemas de zona horaria
       const [year, month, day] = dateString.split("-")
       const date = new Date(Date.UTC(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day), 12, 0, 0))
       return date.toISOString()
@@ -200,16 +294,16 @@ export default function CourseProgrammingForm() {
             activities: activities.map((a) => ({
               evaluationId: a.evaluationData._id,
               value: Number.parseInt(a.value.replace("%", "")),
-              name: a.name, // ✅ Asegurar que el nombre se pase al backend
+              name: a.name,
             })),
             exams: exams.map((e) => ({
               evaluationId: e.evaluationData._id,
               value: Number.parseInt(e.value.replace("%", "")),
-              name: e.name, // ✅ Asegurar que el nombre se pase al backend
+              name: e.name,
             })),
             materials: materials.map((m) => ({
               materialId: m.evaluationData._id,
-              name: m.name, // ✅ Asegurar que el nombre se pase al backend
+              name: m.name,
             })),
           }
         }),
@@ -245,11 +339,10 @@ export default function CourseProgrammingForm() {
       .map((program) => ({
         value: program._id,
         label: program.name,
-        fk_level: program.fk_level, // ✅ Incluir fk_level en las opciones
+        fk_level: program.fk_level,
       }))
   }
 
-  // ✅ MEJORADA: Validación que incluye verificación de temas duplicados y límite de niveles
   const validateForm = () => {
     const errors = []
     const selectedProgramId = getSelectedProgramValue()
@@ -263,12 +356,10 @@ export default function CourseProgrammingForm() {
       errors.push("Debe añadir al menos tres niveles")
     }
 
-    // ✅ NUEVO: Validación del límite máximo de niveles
     if (levels.length > maxLevels) {
       errors.push(`No se pueden crear más de ${maxLevels} niveles para este tipo de programa.`)
     }
 
-    // ✅ NUEVA: Validación de temas duplicados en toda la programación
     const usedTopicIds = new Set()
     const duplicatedTopics = []
 
@@ -392,8 +483,7 @@ export default function CourseProgrammingForm() {
 
   const addLevel = () => {
     if (levels.length >= maxLevels) {
-      // ✅ Usar maxLevels aquí
-      return // No permitir más de X niveles
+      return
     }
 
     const newLevel = {
@@ -403,13 +493,14 @@ export default function CourseProgrammingForm() {
       themes: [],
     }
     setLevels([...levels, newLevel])
+    // REMOVIDO: setIsFormDirty(true)
   }
 
   const handleCancel = () => {
     if (isFormDirty) {
-      setShowCancelConfirm(true)
+      setShowDiscardConfirm(true) // Mostrar modal de confirmación si hay cambios
     } else {
-      navigate("/programacion/programacionCursos")
+      navigate("/programacion/programacionCursos") // Cerrar directamente si no hay cambios
     }
   }
 
@@ -424,7 +515,16 @@ export default function CourseProgrammingForm() {
 
   const handleProgramChange = (option) => {
     setSelectedProgram(option)
-    setIsFormDirty(true)
+    // REMOVIDO: setIsFormDirty(true)
+  }
+
+  const handleDiscardChanges = () => {
+    setShowDiscardConfirm(false)
+    navigate("/programacion/programacionCursos") // Descartar y cerrar el formulario
+  }
+
+  const handleKeepEditing = () => {
+    setShowDiscardConfirm(false) // Cerrar solo el modal de confirmación, mantener el formulario abierto
   }
 
   return (
@@ -465,7 +565,7 @@ export default function CourseProgrammingForm() {
               onChange={(e) => {
                 console.log("📅 Fecha seleccionada:", e.target.value)
                 setStartDate(e.target.value)
-                setIsFormDirty(true)
+                // REMOVIDO: setIsFormDirty(true)
               }}
             />
           </div>
@@ -478,7 +578,7 @@ export default function CourseProgrammingForm() {
               onChange={(e) => {
                 console.log("📅 Fecha fin seleccionada:", e.target.value)
                 setEndDate(e.target.value)
-                setIsFormDirty(true)
+                // REMOVIDO: setIsFormDirty(true)
               }}
             />
           </div>
@@ -489,7 +589,7 @@ export default function CourseProgrammingForm() {
                 checked={activeStatus}
                 onChange={(checked) => {
                   setActiveStatus(checked)
-                  setIsFormDirty(true)
+                  // REMOVIDO: setIsFormDirty(true)
                 }}
               />
             </div>
@@ -502,7 +602,6 @@ export default function CourseProgrammingForm() {
             className="flex items-center px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
             disabled={postLoading || putLoading || levels.length >= maxLevels}
           >
-            {/* ✅ Usar maxLevels aquí */}
             <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -518,7 +617,7 @@ export default function CourseProgrammingForm() {
           levels={levels}
           setLevels={(newLevels) => {
             setLevels(newLevels)
-            setIsFormDirty(true)
+            // REMOVIDO: setIsFormDirty(true)
           }}
           activeTabs={activeTabs}
           setActiveTabs={setActiveTabs}
@@ -577,10 +676,12 @@ export default function CourseProgrammingForm() {
       <ConfirmationModal
         isOpen={showSuccessModal}
         onConfirm={handleSuccessConfirm}
-        title="Operación Exitosa"
+        title={successMessage.includes("exitosamente") ? "Operación Exitosa" : "Error en la Operación"}
         message={successMessage}
         confirmText="Aceptar"
-        confirmColor="bg-green-500 hover:bg-green-600"
+        confirmColor={
+          successMessage.includes("exitosamente") ? "bg-green-500 hover:bg-green-600" : "bg-[#f44144] hover:bg-red-600"
+        }
         showButtonCancel={false}
       />
 
@@ -603,6 +704,17 @@ export default function CourseProgrammingForm() {
         confirmText="Entendido"
         confirmColor="bg-green-500 hover:bg-green-600"
         showButtonCancel={false}
+      />
+      <ConfirmationModal
+        isOpen={showDiscardConfirm}
+        onClose={handleKeepEditing}
+        onConfirm={handleDiscardChanges}
+        title="Descartar Cambios"
+        message="Tienes cambios sin guardar. ¿Deseas descartarlos y salir, o continuar editando?"
+        confirmText="Descartar Cambios"
+        confirmColor="bg-red-500 hover:bg-red-600"
+        cancelText="Continuar Editando"
+        showButtonCancel={true}
       />
     </div>
   )

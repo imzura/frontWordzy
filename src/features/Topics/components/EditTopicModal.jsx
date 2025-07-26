@@ -18,6 +18,8 @@ const EditTopicModal = ({ isOpen, onClose, onSubmit, topic, existingTopics }) =>
   const [showStatusAlert, setShowStatusAlert] = useState(false)
   const [statusAlertInfo, setStatusAlertInfo] = useState(null)
 
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false) // Nuevo estado
+
   // ✅ Hook para verificar cambios de estado
   const { checkStatusChange } = useCheckTopicStatusChange()
 
@@ -129,6 +131,26 @@ const EditTopicModal = ({ isOpen, onClose, onSubmit, topic, existingTopics }) =>
     // El modal de edición permanece abierto y el estado se mantiene como activo
   }
 
+  // NUEVA: Función para manejar el clic en Cancelar
+  const handleCancelClick = () => {
+    if (hasChanges) {
+      setShowDiscardConfirm(true) // Mostrar modal de confirmación si hay cambios
+    } else {
+      onClose() // Cerrar directamente si no hay cambios
+    }
+  }
+
+  // NUEVA: Función para descartar cambios y cerrar el modal principal
+  const handleDiscardChanges = () => {
+    setShowDiscardConfirm(false)
+    onClose() // Llama a la función onClose del padre para cerrar el modal de edición
+  }
+
+  // NUEVA: Función para mantener la edición (cerrar solo el modal de confirmación)
+  const handleKeepEditing = () => {
+    setShowDiscardConfirm(false)
+  }
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose}>
@@ -211,7 +233,7 @@ const EditTopicModal = ({ isOpen, onClose, onSubmit, topic, existingTopics }) =>
           <div className="flex justify-between space-x-4 mt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancelClick} // Usa la nueva función
               className="px-3 py-2 text-sm text-white rounded-[10px] focus:outline-none focus:ring-1 bg-red-500 hover:bg-red-600 focus:ring-red-500"
             >
               Cancelar
@@ -236,12 +258,22 @@ const EditTopicModal = ({ isOpen, onClose, onSubmit, topic, existingTopics }) =>
         onConfirm={handleCloseStatusAlert}
         title="Acción no permitida"
         message="No se puede desactivar el estado del tema ya que se encuentra asociada a una programación activa."
-        confirmText="Cerrar"
+        confirmText="Aceptar"
         confirmColor="bg-[#f44144] hover:bg-red-600"
         showButtonCancel={false}
       />
 
-      
+      <ConfirmationModal
+        isOpen={showDiscardConfirm}
+        onClose={handleKeepEditing} // Si el usuario cierra este modal, quiere seguir editando
+        onConfirm={handleDiscardChanges} // Si el usuario confirma, descarta y cierra el modal principal
+        title="Descartar Cambios"
+        message="Tienes cambios sin guardar. ¿Deseas descartarlos y salir, o continuar editando?"
+        confirmText="Descartar Cambios"
+        confirmColor="bg-red-500 hover:bg-red-600"
+        cancelText="Continuar Editando"
+        showButtonCancel={true} // Este modal necesita un botón de cancelar
+      />
     </>
   )
 }

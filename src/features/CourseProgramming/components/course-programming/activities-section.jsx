@@ -48,6 +48,7 @@ export default function ActivitiesSection({ levelId, themeId, localActiveTab, se
 
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [isSaving, setIsSaving] = useState(false) // NUEVO ESTADO
 
   const { evaluations, refetch: refetchEvaluations } = useGetEvaluations()
   const { createEvaluation } = usePostEvaluation()
@@ -343,34 +344,41 @@ export default function ActivitiesSection({ levelId, themeId, localActiveTab, se
   }
 
   const handleEvaluationSubmit = async (formData) => {
+    setIsSaving(true) // Inicia el estado de carga
+    setSuccessMessage("Guardando...") // Mensaje inicial de carga
+    setShowSuccessModal(true) // Muestra el modal inmediatamente
+
     try {
       await createEvaluation(formData)
       await refetchEvaluations()
       setShowEvaluationModal(false)
 
-      // ✅ Mensaje de éxito más específico
       const typeName = evaluationType === "Actividad" ? "Actividad" : "Examen"
       const evaluationName = formData.get("nombre") || typeName
       setSuccessMessage(`${typeName} "${evaluationName}" creada exitosamente`)
-      setShowSuccessModal(true)
     } catch (error) {
       console.error("Error al crear la evaluación:", error)
       setSuccessMessage(error.message || "Ocurrió un error al crear la evaluación")
-      setShowSuccessModal(true)
+    } finally {
+      setIsSaving(false) // Finaliza el estado de carga
     }
   }
 
   const handleSaveNewMaterial = async (materialData) => {
+    setIsSaving(true) // Inicia el estado de carga
+    setSuccessMessage("Guardando...") // Mensaje inicial de carga
+    setShowSuccessModal(true) // Muestra el modal inmediatamente
+
     try {
       await createMaterial(materialData)
       await refetchMaterials()
       setShowSupportMaterialModal(false)
       setSuccessMessage("Material de Apoyo creado exitosamente")
-      setShowSuccessModal(true)
     } catch (error) {
       console.error("Error al añadir el material:", error)
       setSuccessMessage(error.message || "Ocurrió un error al crear el material de apoyo")
-      setShowSuccessModal(true)
+    } finally {
+      setIsSaving(false) // Finaliza el estado de carga
     }
   }
 
@@ -644,12 +652,30 @@ export default function ActivitiesSection({ levelId, themeId, localActiveTab, se
 
       <ConfirmationModal
         isOpen={showSuccessModal}
-        onConfirm={() => setShowSuccessModal(false)}
-        title="Operación Exitosa"
-        message={successMessage}
-        confirmText="Aceptar"
-        confirmColor="bg-green-500 hover:bg-green-600"
+        onConfirm={() => {
+          if (!isSaving) {
+            // Solo permite cerrar si no está guardando
+            setShowSuccessModal(false)
+          }
+        }}
+        title={
+          isSaving
+            ? "Cargando..."
+            : successMessage.includes("exitosamente")
+              ? "Operación Exitosa"
+              : "Error en la Operación"
+        }
+        message={isSaving ? "Por favor espere mientras se guarda la información." : successMessage}
+        confirmText={isSaving ? "Cargando..." : "Aceptar"}
+        confirmColor={
+          isSaving
+            ? "bg-gray-500"
+            : successMessage.includes("exitosamente")
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-[#f44144] hover:bg-red-600"
+        }
         showButtonCancel={false}
+        isLoading={isSaving} // Pasa el estado de carga al modal
       />
     </div>
   )

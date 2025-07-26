@@ -244,7 +244,7 @@ const LevelAssignmentPage = () => {
         onConfirm={() => setShowUncompletedLevelModal(false)} // Solo cerrar
         title="Nivel No Completado"
         message={`El nivel "${uncompletedLevelName}" no puede ser activado porque aún no está completado. Por favor, asegúrate de que el nivel esté marcado como 'Completado' antes de activarlo para esta ficha.`}
-        confirmText="Cerrar"
+        confirmText="Aceptar"
         confirmColor="bg-red-500 hover:bg-red-600"
         showButtonCancel={false} // No mostrar botón de cancelar
       />

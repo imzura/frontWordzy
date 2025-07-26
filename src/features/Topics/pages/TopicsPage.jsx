@@ -316,10 +316,16 @@ const TopicsPage = () => {
         <ConfirmationModal
           isOpen={showSuccessModal}
           onConfirm={() => setShowSuccessModal(false)}
-          title="Operación Exitosa"
+          title={
+            successMessage.includes("exitosamente") ? "Operación Exitosa" : "Error en la Operación" 
+          }
           message={successMessage}
           confirmText="Aceptar"
-          confirmColor="bg-green-500 hover:bg-green-600"
+          confirmColor={
+            successMessage.includes("exitosamente")
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-[#f44144] hover:bg-red-600" // Color dinámico
+          }
           showButtonCancel={false}
         />
 

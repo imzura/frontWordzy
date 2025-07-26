@@ -1,71 +1,84 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
-  const [fichasCollapsed, setFichasCollapsed] = useState(false)
+  const [fichasCollapsed, setFichasCollapsed] = useState(false);
+  const navigate = useNavigate();
 
-  if (!isOpen || !instructor) return null
+  if (!isOpen || !instructor) return null;
 
   const toggleFichasCollapse = () => {
-    setFichasCollapsed(!fichasCollapsed)
-  }
+    setFichasCollapsed(!fichasCollapsed);
+  };
+
+  const handleBackClick = () => {
+    navigate("/programacion/programacionCursos");
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col relative">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-lg">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-[#1f384c]">DETALLE DEL INSTRUCTOR</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Cerrar modal"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-lg z-10">
+          <div className="flex justify-center items-center">
+            <h2 className="text-xl font-bold text-[#1f384c]">
+              Detalle del Instructor
+            </h2>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-4 pb-6">
+        {/* Contenido scrollable */}
+        <div className="overflow-y-auto px-6 py-4 pb-28 flex-1">
           {/* Información Personal */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-[#1f384c] mb-4">Información Personal</h3>
+            <h3 className="text-lg font-semibold text-[#1f384c] mb-4">
+              Información Personal
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gray-50 p-3 rounded-md">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Nombre Completo</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Nombre Completo
+                </label>
                 <p className="text-gray-900 font-medium">
                   {instructor.nombre} {instructor.apellido}
                 </p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-md">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Documento</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Documento
+                </label>
                 <p className="text-gray-900">
                   {instructor.tipoDocumento}: {instructor.documento}
                 </p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-md">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Teléfono</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Teléfono
+                </label>
                 <p className="text-gray-900">{instructor.telefono}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-md">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Correo Electrónico</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Correo Electrónico
+                </label>
                 <p className="text-gray-900">{instructor.correo}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-md">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Estado</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Estado
+                </label>
                 <span
                   className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                    instructor.estado === "Activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    instructor.estado === "Activo"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
                   }`}
                 >
                   {instructor.estado}
@@ -81,7 +94,8 @@ const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
                 Fichas Asignadas
                 {instructor.fichas && instructor.fichas.length > 0 && (
                   <span className="ml-2 text-sm font-normal text-gray-600">
-                    ({instructor.fichas.length} ficha{instructor.fichas.length !== 1 ? "s" : ""})
+                    ({instructor.fichas.length} ficha
+                    {instructor.fichas.length !== 1 ? "s" : ""})
                   </span>
                 )}
               </h3>
@@ -120,7 +134,9 @@ const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div className="font-semibold text-[#1f384c]">
-                          {typeof ficha === "object" ? ficha.code || ficha.codigo : `Ficha ${index + 1}`}
+                          {typeof ficha === "object"
+                            ? ficha.code || ficha.codigo
+                            : `Ficha ${index + 1}`}
                         </div>
                         {typeof ficha === "object" && ficha.course_status && (
                           <span
@@ -128,8 +144,8 @@ const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
                               ficha.course_status === "EN EJECUCION"
                                 ? "bg-green-100 text-green-800"
                                 : ficha.course_status === "TERMINADO"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-gray-100 text-gray-800"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-800"
                             }`}
                           >
                             {ficha.course_status}
@@ -180,9 +196,19 @@ const InstructorDetailModal = ({ instructor, isOpen, onClose }) => {
             )}
           </div>
         </div>
+
+        {/* Botón fijo al fondo del modal */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-center">
+          <button
+            onClick={handleBackClick}
+            className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default InstructorDetailModal
+export default InstructorDetailModal;

@@ -1,24 +1,21 @@
-"use client";
+"use client"
 
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import useGetCourses from "../../File/hooks/useGetCourses";
-import { formatDate } from "../../../shared/utils/dateFormatter";
-import { useGetCourseProgrammings } from "../../CourseProgramming/hooks/useGetCoursePrograming";
-import useGetApprentices from "../../Apprentices/hooks/useGetApprentices";
-import UserMenu from "../../../shared/components/userMenu";
-import ProtectedTable from "../../../shared/components/ProtectedTable";
+import { useNavigate } from "react-router-dom"
+import { useState, useEffect, useMemo } from "react"
+import useGetCourses from "../../File/hooks/useGetCourses"
+import { formatDate } from "../../../shared/utils/dateFormatter"
+import { useGetCourseProgrammings } from "../../CourseProgramming/hooks/useGetCoursePrograming"
+import useGetApprentices from "../../Apprentices/hooks/useGetApprentices"
+import UserMenu from "../../../shared/components/userMenu"
+import ProtectedTable from "../../../shared/components/ProtectedTable"
+import CustomSelect from "../../CourseProgramming/components/course-programming/ui/custom-select"
 
 const columns = [
   { key: "code", label: "Ficha", width: "10%" },
   {
     key: "fk_programs",
     label: "Programa",
-    render: (item) => (
-      <div className="whitespace-normal break-words max-w-md">
-        {item.fk_programs}
-      </div>
-    ),
+    render: (item) => <div className="whitespace-normal break-words max-w-md">{item.fk_programs}</div>,
   },
   { key: "start_date", label: "Fecha Inicio", width: "12%" },
   { key: "end_date", label: "Fecha Fin", width: "12%" },
@@ -29,41 +26,34 @@ const columns = [
       <div className="flex items-center gap-5">
         <div className="flex-1 min-w-[100px]">
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-green-500 h-2 rounded-full"
-              style={{ width: item.progreso || "0%" }}
-            ></div>
+            <div className="bg-green-500 h-2 rounded-full" style={{ width: item.progreso || "0%" }}></div>
           </div>
         </div>
-        <span className="text-sm text-gray-600 w-13 text-right">
-          {item.progreso || "0%"}
-        </span>
+        <span className="text-sm text-gray-600 w-13 text-right">{item.progreso || "0%"}</span>
       </div>
     ),
   },
-];
+]
 
 const ScheduledCoursesPageImproved = () => {
-  const navigate = useNavigate();
-  const [showDebug, setShowDebug] = useState(false);
-  const {
-    courses,
-    loading: coursesLoading,
-    error: coursesError,
-  } = useGetCourses();
-  const { programmings, loading: programmingsLoading } =
-    useGetCourseProgrammings();
-  const { apprentices, loading: apprenticesLoading } = useGetApprentices();
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const navigate = useNavigate()
+  const [showDebug, setShowDebug] = useState(false)
+  const { courses, loading: coursesLoading, error: coursesError } = useGetCourses()
+  const { programmings, loading: programmingsLoading } = useGetCourseProgrammings()
+  const { apprentices, loading: apprenticesLoading } = useGetApprentices()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   // Estados para el progreso calculado
-  const [coursesWithProgress, setCoursesWithProgress] = useState([]);
-  const [progressLoading, setProgressLoading] = useState(true);
-  const [hasData, setHasData] = useState(false);
+  const [coursesWithProgress, setCoursesWithProgress] = useState([])
+  const [progressLoading, setProgressLoading] = useState(true)
+  const [hasData, setHasData] = useState(false)
+
+  // Nuevo estado para el programa seleccionado (ahora puede ser un objeto o string)
+  const [selectedProgram, setSelectedProgram] = useState(null) // Cambiado a null para manejar el objeto completo
 
   // Función para extraer evaluaciones de un nivel
   const getEvaluationsFromLevel = (level) => {
-    const evaluations = [];
+    const evaluations = []
     if (level.topics && level.topics.length > 0) {
       level.topics.forEach((topic) => {
         if (topic.activities && topic.activities.length > 0) {
@@ -72,8 +62,8 @@ const ScheduledCoursesPageImproved = () => {
               evaluationId: activity.evaluationId,
               type: "activity",
               value: activity.value,
-            });
-          });
+            })
+          })
         }
         if (topic.exams && topic.exams.length > 0) {
           topic.exams.forEach((exam) => {
@@ -81,245 +71,231 @@ const ScheduledCoursesPageImproved = () => {
               evaluationId: exam.evaluationId,
               type: "exam",
               value: exam.value,
-            });
-          });
+            })
+          })
         }
-      });
+      })
     }
-    return evaluations;
-  };
+    return evaluations
+  }
 
   // Función para obtener progreso de un aprendiz específico
   const fetchApprenticeProgress = async (apprenticeId) => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/apprentice-progress?apprenticeId=${apprenticeId}`,
-        {
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        }
-      );
+      const response = await fetch(`http://localhost:3000/api/apprentice-progress?apprenticeId=${apprenticeId}`, {
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      })
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
 
-      const data = await response.json();
-      return data.success ? data.data : [];
+      const data = await response.json()
+      return data.success ? data.data : []
     } catch (error) {
-      console.error(
-        `❌ Error obteniendo progreso para aprendiz ${apprenticeId}:`,
-        error
-      );
-      return [];
+      console.error(`❌ Error obteniendo progreso para aprendiz ${apprenticeId}:`, error)
+      return []
     }
-  };
+  }
 
   // Función principal para calcular progreso de una ficha
   const calculateFichaProgress = async (course) => {
     try {
-      let totalProgresoNiveles = 0;
-      let nivelesConEvaluaciones = 0;
+      let totalProgresoNiveles = 0
+      let nivelesConEvaluaciones = 0
 
       const fichaApprentices = apprentices.filter(
-        (apprentice) =>
-          apprentice.ficha &&
-          apprentice.ficha.includes(Number.parseInt(course.code))
-      );
+        (apprentice) => apprentice.ficha && apprentice.ficha.includes(Number.parseInt(course.code)),
+      )
 
       if (fichaApprentices.length === 0) {
-        return 0;
+        return 0
       }
 
       const programming = programmings.find(
-        (prog) =>
-          prog.programId?.name === course.fk_programs ||
-          prog.programId?.abbreviation === course.fk_programs
-      );
+        (prog) => prog.programId?.name === course.fk_programs || prog.programId?.abbreviation === course.fk_programs,
+      )
 
       if (!programming) {
-        return 0;
+        return 0
       }
 
       if (!programming.levels || programming.levels.length === 0) {
-        return 0;
+        return 0
       }
 
       const allApprenticesProgress = await Promise.all(
         fichaApprentices.map(async (apprentice) => {
-          const apprenticeId = apprentice._id || apprentice.id;
-          const progressData = await fetchApprenticeProgress(apprenticeId);
+          const apprenticeId = apprentice._id || apprentice.id
+          const progressData = await fetchApprenticeProgress(apprenticeId)
           return {
             apprenticeId,
             apprenticeName: `${apprentice.nombre} ${apprentice.apellido}`,
             progress: progressData,
-          };
-        })
-      );
+          }
+        }),
+      )
 
       programming.levels.forEach((level, index) => {
-        const nivelNumero = index + 1;
+        const nivelNumero = index + 1
 
-        const evaluacionesProgramadas = getEvaluationsFromLevel(level);
+        const evaluacionesProgramadas = getEvaluationsFromLevel(level)
 
         if (evaluacionesProgramadas.length > 0) {
-          nivelesConEvaluaciones++;
+          nivelesConEvaluaciones++
 
-          let totalCompletitudNivel = 0;
+          let totalCompletitudNivel = 0
 
           allApprenticesProgress.forEach(({ apprenticeName, progress }) => {
-            const evaluacionesRealizadas = progress.filter(
-              (p) => p.level === nivelNumero
-            );
+            const evaluacionesRealizadas = progress.filter((p) => p.level === nivelNumero)
 
-            let evaluacionesAprobadas = 0;
+            let evaluacionesAprobadas = 0
             evaluacionesProgramadas.forEach((evalProgramada) => {
-              const evalId = evalProgramada.evaluationId;
+              const evalId = evalProgramada.evaluationId
               const evalRealizada = evaluacionesRealizadas.find(
                 (er) =>
                   (er.evaluationId === evalId ||
                     er.evaluationId?._id === evalId ||
                     er.evaluationId?.toString() === evalId?.toString()) &&
-                  er.passed === true
-              );
+                  er.passed === true,
+              )
 
               if (evalRealizada) {
-                evaluacionesAprobadas++;
+                evaluacionesAprobadas++
               }
-            });
+            })
 
-            const completitudAprendiz =
-              (evaluacionesAprobadas / evaluacionesProgramadas.length) * 100;
-            totalCompletitudNivel += completitudAprendiz;
-          });
+            const completitudAprendiz = (evaluacionesAprobadas / evaluacionesProgramadas.length) * 100
+            totalCompletitudNivel += completitudAprendiz
+          })
 
-          const promedioNivel =
-            fichaApprentices.length > 0
-              ? totalCompletitudNivel / fichaApprentices.length
-              : 0;
-          totalProgresoNiveles += promedioNivel;
+          const promedioNivel = fichaApprentices.length > 0 ? totalCompletitudNivel / fichaApprentices.length : 0
+          totalProgresoNiveles += promedioNivel
         }
-      });
+      })
 
       const progresoGeneral =
-        programming.levels.length > 0
-          ? Math.round(totalProgresoNiveles / programming.levels.length)
-          : 0;
+        programming.levels.length > 0 ? Math.round(totalProgresoNiveles / programming.levels.length) : 0
 
-      return progresoGeneral;
+      return progresoGeneral
     } catch (error) {
-      console.error(
-        `❌ Error calculando progreso de ficha ${course.code}:`,
-        error
-      );
-      return 0;
+      console.error(`❌ Error calculando progreso de ficha ${course.code}:`, error)
+      return 0
     }
-  };
+  }
 
   // Efecto para calcular progreso cuando todos los datos estén listos
   useEffect(() => {
     const calculateAllProgress = async () => {
       // Verificar si hay datos disponibles
-      const hasCoursesData = !coursesLoading && courses.length > 0;
-      const hasProgrammingsData =
-        !programmingsLoading && programmings.length > 0;
-      const hasApprenticesData = !apprenticesLoading && apprentices.length > 0;
+      const hasCoursesData = !coursesLoading && courses.length > 0
+      const hasProgrammingsData = !programmingsLoading && programmings.length > 0
+      const hasApprenticesData = !apprenticesLoading && apprentices.length > 0
 
       // Si terminó de cargar pero no hay datos
       if (!coursesLoading && !programmingsLoading && !apprenticesLoading) {
         if (!hasCoursesData || !hasProgrammingsData || !hasApprenticesData) {
-          console.log(
-            "⚠️ No hay datos suficientes para mostrar cursos programados"
-          );
-          setHasData(false);
-          setProgressLoading(false);
-          return;
+          console.log("⚠️ No hay datos suficientes para mostrar cursos programados")
+          setHasData(false)
+          setProgressLoading(false)
+          return
         }
       }
 
       // Si hay datos, proceder con el cálculo
       if (hasCoursesData && hasProgrammingsData && hasApprenticesData) {
-        setProgressLoading(true);
-        setHasData(true);
+        setProgressLoading(true)
+        setHasData(true)
 
         const coursesWithCalculatedProgress = await Promise.all(
           courses.map(async (course) => {
-            const progreso = await calculateFichaProgress(course);
+            const progreso = await calculateFichaProgress(course)
             return {
               ...course,
               start_date: formatDate(course.start_date),
               end_date: formatDate(course.end_date),
               progreso: `${progreso}%`,
-            };
-          })
-        );
+            }
+          }),
+        )
 
-        setCoursesWithProgress(coursesWithCalculatedProgress);
-        setProgressLoading(false);
+        setCoursesWithProgress(coursesWithCalculatedProgress)
+        setProgressLoading(false)
       }
-    };
-
-    calculateAllProgress();
-  }, [
-    courses,
-    programmings,
-    apprentices,
-    coursesLoading,
-    programmingsLoading,
-    apprenticesLoading,
-  ]);
-
-  const handleShowLevels = (ficha) => {
-    sessionStorage.setItem("selectedFichaId", ficha.id);
-    sessionStorage.setItem("selectedFichaNombre", ficha.code);
-    sessionStorage.setItem("selectedFichaPrograma", ficha.fk_programs);
-
-    const programId =
-      ficha.fk_programs_id || ficha.program_id || ficha.programId;
-
-    if (programId) {
-      sessionStorage.setItem("selectedProgramId", programId);
-    } else {
-      console.error("No se encontró ID del programa en:", ficha);
     }
 
-    navigate("/progreso/cursosProgramados/niveles");
-  };
+    calculateAllProgress()
+  }, [courses, programmings, apprentices, coursesLoading, programmingsLoading, apprenticesLoading])
+
+  // Obtener nombres de programas únicos y ordenarlos, formateados para CustomSelect
+  const programOptions = useMemo(() => {
+    if (courses.length === 0) return []
+    const names = new Set(courses.map((course) => course.fk_programs))
+    return Array.from(names)
+      .sort()
+      .map((name) => ({ value: name, label: name }))
+  }, [courses])
+
+  // Establecer el programa seleccionado por defecto (posición 0 del array)
+  useEffect(() => {
+    if (programOptions.length > 0 && !selectedProgram) {
+      setSelectedProgram(programOptions[0])
+    }
+  }, [programOptions, selectedProgram])
+
+  // Filtrar los cursos basados en el programa seleccionado
+  const displayedCourses = useMemo(() => {
+    if (!selectedProgram) {
+      return coursesWithProgress // Si no hay programa seleccionado, muestra todos
+    }
+    return coursesWithProgress.filter((course) => course.fk_programs === selectedProgram.value)
+  }, [coursesWithProgress, selectedProgram])
+
+  const handleShowLevels = (ficha) => {
+    sessionStorage.setItem("selectedFichaId", ficha.id)
+    sessionStorage.setItem("selectedFichaNombre", ficha.code)
+    sessionStorage.setItem("selectedFichaPrograma", ficha.fk_programs)
+
+    const programId = ficha.fk_programs_id || ficha.program_id || ficha.programId
+
+    if (programId) {
+      sessionStorage.setItem("selectedProgramId", programId)
+    } else {
+      console.error("No se encontró ID del programa en:", ficha)
+    }
+
+    navigate("/progreso/cursosProgramados/niveles")
+  }
 
   // Calcular estado de carga general
-  const isLoading =
-    coursesLoading ||
-    programmingsLoading ||
-    apprenticesLoading ||
-    progressLoading;
+  const isLoading = coursesLoading || programmingsLoading || apprenticesLoading || progressLoading
 
   // Función para determinar la razón específica por la que no hay datos
   const getNoDataReason = () => {
     if (courses.length === 0) {
-      return `No hay fichas registradas (${courses.length} fichas encontradas)`;
+      return `No hay fichas registradas (${courses.length} fichas encontradas)`
     }
     if (programmings.length === 0) {
-      return `No hay programaciones configuradas (${programmings.length} programaciones encontradas)`;
+      return `No hay programaciones configuradas (${programmings.length} programaciones encontradas)`
     }
     if (apprentices.length === 0) {
-      return `No hay aprendices registrados (${apprentices.length} aprendices encontrados)`;
+      return `No hay aprendices registrados (${apprentices.length} aprendices encontrados)`
     }
-    return "No se encontraron datos suficientes";
-  };
+    return "No se encontraron datos suficientes"
+  }
 
   // Componente del Header (reutilizable)
   const Header = () => (
     <header className="bg-white py-4 px-6 border-b border-[#d6dade] mb-6">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#1f384c]">
-          Cursos programados
-        </h1>
+        <h1 className="text-2xl font-bold text-[#1f384c]">Cursos programados</h1>
         <UserMenu />
       </div>
     </header>
-  );
+  )
 
   // Componente de contenido cuando no hay datos
   const NoDataContent = () => (
@@ -328,12 +304,7 @@ const ScheduledCoursesPageImproved = () => {
         <div className="text-center max-w-md">
           <div className="mb-6">
             <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <svg
-                className="w-12 h-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -342,12 +313,9 @@ const ScheduledCoursesPageImproved = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              No hay cursos programados
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">No hay cursos programados</h2>
             <p className="text-gray-600 mb-6">
-              No se encontraron cursos programados en la base de datos. Esto
-              puede deberse a que:
+              No se encontraron cursos programados en la base de datos. Esto puede deberse a que:
             </p>
             <div className="text-left bg-gray-50 p-4 rounded-lg mb-6">
               <div className="flex items-start gap-2 text-sm text-gray-700">
@@ -365,80 +333,75 @@ const ScheduledCoursesPageImproved = () => {
         </div>
       </div>
     </div>
-  );
+  )
 
   // Componente de contenido cuando hay datos
   const DataContent = () => (
     <div className="container mx-auto px-6">
-      {/* <button
-        onClick={() => setShowDebug(!showDebug)}
-        className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1.5 text-sm rounded-lg hover:bg-blue-600 transition-colors mb-4"
-      >
-        {showDebug ? "🔍 Ocultar Debug" : "🔍 Mostrar Debug"}
-      </button> */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="w-full">
+          {" "}
+          {/* Ajusta el ancho según necesites */}
+          <CustomSelect
+            placeholder="Seleccionar Programa"
+            options={programOptions}
+            value={selectedProgram}
+            onChange={setSelectedProgram} // CustomSelect pasa el objeto completo
+          />
+        </div>
+
+        {/* <button
+          onClick={() => setShowDebug(!showDebug)}
+          className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1.5 text-sm rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          {showDebug ? "🔍 Ocultar Debug" : "🔍 Mostrar Debug"}
+        </button> */}
+      </div>
 
       {showDebug && (
         <div className="mb-4 p-4 bg-green-50 rounded-lg">
-          <h4 className="font-semibold text-green-800">
-            📊 Progreso General de Fichas (Promedio de Niveles):
-          </h4>
+          <h4 className="font-semibold text-green-800">📊 Progreso General de Fichas (Promedio de Niveles):</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2 text-sm">
-            {coursesWithProgress.map((course) => {
+            {displayedCourses.map((course) => {
               const programming = programmings.find(
                 (prog) =>
-                  prog.programId?.name === course.fk_programs ||
-                  prog.programId?.abbreviation === course.fk_programs
-              );
-              const totalNiveles = programming?.levels?.length || 0;
+                  prog.programId?.name === course.fk_programs || prog.programId?.abbreviation === course.fk_programs,
+              )
+              const totalNiveles = programming?.levels?.length || 0
 
               return (
                 <div key={course.id} className="bg-white p-3 rounded border">
                   <div className="font-medium">Ficha {course.code}</div>
-                  <div className="text-gray-600 text-xs">
-                    {course.fk_programs}
-                  </div>
+                  <div className="text-gray-600 text-xs">{course.fk_programs}</div>
                   <div className="text-xs text-gray-500 mb-1">
-                    {totalNiveles > 0
-                      ? `${totalNiveles} niveles programados`
-                      : "Sin niveles programados"}
+                    {totalNiveles > 0 ? `${totalNiveles} niveles programados` : "Sin niveles programados"}
                   </div>
                   <div
-                    className={`font-bold ${
-                      Number.parseInt(course.progreso) > 0
-                        ? "text-green-600"
-                        : "text-gray-400"
-                    }`}
+                    className={`font-bold ${Number.parseInt(course.progreso) > 0 ? "text-green-600" : "text-gray-400"}`}
                   >
                     Progreso: {course.progreso}
                   </div>
-                  {Number.parseInt(course.progreso) === 0 &&
-                    totalNiveles > 0 && (
-                      <div className="text-xs text-orange-500">
-                        ⚠️ Sin evaluaciones aprobadas
-                      </div>
-                    )}
-                  {totalNiveles === 0 && (
-                    <div className="text-xs text-red-500">
-                      ❌ Sin programación
-                    </div>
+                  {Number.parseInt(course.progreso) === 0 && totalNiveles > 0 && (
+                    <div className="text-xs text-orange-500">⚠️ Sin evaluaciones aprobadas</div>
                   )}
+                  {totalNiveles === 0 && <div className="text-xs text-red-500">❌ Sin programación</div>}
                 </div>
-              );
+              )
             })}
           </div>
         </div>
       )}
 
       <ProtectedTable
-        data={coursesWithProgress}
+        data={displayedCourses} // Usar los cursos filtrados
         columns={columns}
         module="Cursos Programados" // Nombre del módulo para verificar permisos
         onShow={handleShowLevels}
         tooltipText="Ver niveles"
-        showActions={{show: true, edit: false, delete: false, add: false }}
+        showActions={{ show: true, edit: false, delete: false, add: false }}
       />
     </div>
-  );
+  )
 
   return (
     <div className="max-h-screen">
@@ -454,7 +417,7 @@ const ScheduledCoursesPageImproved = () => {
         <NoDataContent />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ScheduledCoursesPageImproved;
+export default ScheduledCoursesPageImproved

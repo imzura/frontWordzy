@@ -173,7 +173,7 @@ const Evaluations = () => {
             ? `¿Estás seguro de que deseas eliminar la evaluación "${evaluationToDelete.nombre}"?`
             : "¿Estás seguro de que deseas eliminar esta evaluación?"
         }
-        confirmText="Confirmar Eliminación"
+        confirmText="Eliminar"
         confirmColor="bg-[#f44144] hover:bg-red-600"
       />
 
