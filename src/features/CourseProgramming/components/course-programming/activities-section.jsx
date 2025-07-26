@@ -616,13 +616,12 @@ export default function ActivitiesSection({ levelId, themeId, localActiveTab, se
         </div>
       </div>
 
-      {/* ✅ MEJORA: Pasar el tipo de evaluación al modal */}
       <EvaluationModal
         isOpen={showEvaluationModal}
         onClose={() => setShowEvaluationModal(false)}
         onSubmit={handleEvaluationSubmit}
         evaluation={null}
-        evaluationType={evaluationType} // ✅ Pasar el tipo específico
+        evaluationType={evaluationType}
       />
 
       <EvaluationDetailModal

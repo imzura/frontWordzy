@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import GenericTable from "../../../shared/components/Table";
 import { RefreshCw } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useApprenticeProgress } from "../hooks/use-apprentice-progress";

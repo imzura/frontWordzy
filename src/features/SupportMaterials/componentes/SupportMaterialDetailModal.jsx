@@ -26,10 +26,6 @@ const SupportMaterialDetailModal = ({ isOpen, onClose, material }) => {
                 {material.titulo || material.nombre}
               </div>
             </div>
-            {/* <div>
-              <label className="block text-sm text-[#627b87] mb-1">Tema:</label>
-              <div className="px-3 py-2 border border-[#d9d9d9] rounded bg-[#f6f6fb]">{material.tema}</div>
-            </div> */}
             <div>
               <label className="block text-sm text-[#627b87] mb-1">
                 Fecha:
@@ -78,7 +74,7 @@ const SupportMaterialDetailModal = ({ isOpen, onClose, material }) => {
         </div>
 
         {/* Footer fijo */}
-        <div className="p-6 border-t border-gray-200 flex justify-end flex-shrink-0">
+        <div className="p-4 border-t border-gray-200 flex justify-center flex-shrink-0">
           <button
             className="px-6 py-2 bg-[#dc3545] text-white rounded-lg hover:bg-red-600 transition-colors"
             onClick={onClose}

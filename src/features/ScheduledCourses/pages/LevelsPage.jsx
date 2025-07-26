@@ -1,7 +1,6 @@
 "use client";
 
 import { useNavigate } from "react-router-dom";
-import GenericTable from "../../../shared/components/Table";
 import { useState, useEffect } from "react";
 import { useGetApprenticesByFicha } from "../hooks/use-get-apprentices-by-ficha";
 import { useGetProgrammingByProgramName } from "../hooks/use-get-programming-by-program-name";

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import GenericTable from "../../../shared/components/Table";
 import { useApprenticesWithProgress } from "../hooks/use-apprentices-with-progress";
 import ProgrammingDebugInfo from "./programming-debug-info";
 import UserMenu from "../../../shared/components/userMenu";

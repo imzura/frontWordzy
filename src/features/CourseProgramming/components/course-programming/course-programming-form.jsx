@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import ConfirmationModal from "../../../../shared/components/ConfirmationModal"
 import LevelsList from "./levels-list"
@@ -51,6 +51,7 @@ export default function CourseProgrammingForm() {
       setSelectedProgram({
         value: programming.programId._id,
         label: programming.programId.name,
+        fk_level: programming.programId.fk_level, // ✅ Cargar fk_level para el modo edición
       })
 
       // ✅ Formatear fechas correctamente desde la base de datos
@@ -96,7 +97,7 @@ export default function CourseProgrammingForm() {
             activities: [
               ...(topic.activities || []).map((act) => ({
                 id: act._id,
-                name: act.evaluationId?.nombre || "Actividad",
+                name: act.name || act.evaluationId?.nombre || "Actividad",
                 value: `${act.value}%`,
                 type: "Actividades",
                 evaluationData: act.evaluationId ? { ...act, ...act.evaluationId } : act,
@@ -104,7 +105,7 @@ export default function CourseProgrammingForm() {
               })),
               ...(topic.exams || []).map((exam) => ({
                 id: exam._id,
-                name: exam.evaluationId?.nombre || "Examen",
+                name: exam.name || exam.evaluationId?.nombre || "Examen",
                 value: `${exam.value}%`,
                 type: "Exámenes",
                 evaluationData: exam.evaluationId ? { ...exam, ...exam.evaluationId } : exam,
@@ -112,7 +113,7 @@ export default function CourseProgrammingForm() {
               })),
               ...(topic.materials || []).map((mat) => ({
                 id: mat._id,
-                name: mat.materialId?.titulo || "Material",
+                name: mat.name || mat.materialId?.titulo || "Material",
                 value: "N/A",
                 type: "Material",
                 evaluationData: mat.materialId ? { ...mat, ...mat.materialId } : mat,
@@ -143,6 +144,15 @@ export default function CourseProgrammingForm() {
     }
     return null
   }
+
+  // ✅ NUEVO: Determinar el máximo de niveles basado en el tipo de programa
+  const maxLevels = useMemo(() => {
+    if (selectedProgram && typeof selectedProgram === "object" && selectedProgram.fk_level) {
+      return selectedProgram.fk_level === "TECNICO" ? 3 : 6
+    }
+    // Valor por defecto si no hay programa seleccionado o tipo desconocido
+    return 6
+  }, [selectedProgram])
 
   const transformDataForBackend = () => {
     // ✅ Nueva función para manejar fechas correctamente
@@ -190,13 +200,16 @@ export default function CourseProgrammingForm() {
             activities: activities.map((a) => ({
               evaluationId: a.evaluationData._id,
               value: Number.parseInt(a.value.replace("%", "")),
+              name: a.name, // ✅ Asegurar que el nombre se pase al backend
             })),
             exams: exams.map((e) => ({
               evaluationId: e.evaluationData._id,
               value: Number.parseInt(e.value.replace("%", "")),
+              name: e.name, // ✅ Asegurar que el nombre se pase al backend
             })),
             materials: materials.map((m) => ({
               materialId: m.evaluationData._id,
+              name: m.name, // ✅ Asegurar que el nombre se pase al backend
             })),
           }
         }),
@@ -232,10 +245,11 @@ export default function CourseProgrammingForm() {
       .map((program) => ({
         value: program._id,
         label: program.name,
+        fk_level: program.fk_level, // ✅ Incluir fk_level en las opciones
       }))
   }
 
-  // ✅ MEJORADA: Validación que incluye verificación de temas duplicados
+  // ✅ MEJORADA: Validación que incluye verificación de temas duplicados y límite de niveles
   const validateForm = () => {
     const errors = []
     const selectedProgramId = getSelectedProgramValue()
@@ -249,8 +263,9 @@ export default function CourseProgrammingForm() {
       errors.push("Debe añadir al menos tres niveles")
     }
 
-    if (levels.length > 6) {
-      errors.push("No se pueden crear más de 6 niveles")
+    // ✅ NUEVO: Validación del límite máximo de niveles
+    if (levels.length > maxLevels) {
+      errors.push(`No se pueden crear más de ${maxLevels} niveles para este tipo de programa.`)
     }
 
     // ✅ NUEVA: Validación de temas duplicados en toda la programación
@@ -376,8 +391,9 @@ export default function CourseProgrammingForm() {
   }
 
   const addLevel = () => {
-    if (levels.length >= 6) {
-      return // No permitir más de 6 niveles
+    if (levels.length >= maxLevels) {
+      // ✅ Usar maxLevels aquí
+      return // No permitir más de X niveles
     }
 
     const newLevel = {
@@ -484,15 +500,16 @@ export default function CourseProgrammingForm() {
           <button
             onClick={addLevel}
             className="flex items-center px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-            disabled={postLoading || putLoading || levels.length >= 6}
+            disabled={postLoading || putLoading || levels.length >= maxLevels}
           >
+            {/* ✅ Usar maxLevels aquí */}
             <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Añadir Nivel
           </button>
           <div className="text-sm text-gray-500">
-            {levels.length} de 6 niveles máximos (
+            {levels.length} de {maxLevels} niveles máximos (
             {levels.length < 3 ? `faltan ${3 - levels.length} mínimos` : "mínimo cumplido"})
           </div>
         </div>

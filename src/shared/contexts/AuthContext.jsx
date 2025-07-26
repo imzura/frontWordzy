@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser)
-        console.log("Los datops del usuario son:", userData)
+        console.log("Los datos del usuario son:", userData)
         if (userData.token) {
           setUser(userData)
         } else {
